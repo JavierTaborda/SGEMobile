@@ -4,7 +4,7 @@ import RateInput from '@/components/inputs/RateInput';
 import BottomModal from '@/components/ui/BottomModal';
 import Loader from '@/components/ui/Loader';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AuthPay } from '../types/AuthPay';
 
 interface Props {
@@ -30,11 +30,7 @@ export default function AuthPayModal({ visible, onClose, item, onAuthorize }: Pr
   return (
     <BottomModal visible={visible} onClose={onClose} heightPercentage={0.85}>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 
-      >
 
 
         <ScrollView className="flex-1 px-1 "
@@ -117,7 +113,6 @@ export default function AuthPayModal({ visible, onClose, item, onAuthorize }: Pr
             </Text>
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
     </BottomModal>
   );
 }

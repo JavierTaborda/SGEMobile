@@ -1,33 +1,69 @@
-
-import { useEffect, useState } from 'react';
+import { useRefreshControl } from '@/utils/userRefreshControl';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getPaysToAuthorize } from '../services/AuthPaysServices';
 import { AuthPay } from '../types/AuthPay';
 
-export function useAuthPays() {
+export function useAuthPays(searchText: string) {
   const [pays, setPays] = useState<AuthPay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const totalAutorizadoVED = pays
-    .filter((d) => d.monedaautorizada === 'VED' && d.autorizadopagar==='1')
-    .reduce((acc, item) => acc + parseFloat(item.montoautorizado), 0);
+  const { refreshing, canRefresh, cooldown, wrapRefresh, cleanup } = useRefreshControl(15);
 
-  const totalAutorizadoUSD = pays
-    .filter((d) => d.monedaautorizada === 'USD'&& d.autorizadopagar==='1')
-    .reduce((acc, item) => acc + parseFloat(item.montoautorizado), 0);
+  useEffect(() => cleanup, []);
 
+  // dynamic filter
+  const filteredPays = useMemo(() => {
+    return pays.filter((item) =>
+      `${item.observacion} ${item.beneficiario}`
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+    );
+  }, [pays, searchText]);
 
- const totalDocumentsAuth = pays.filter(d => d.autorizadopagar === '1').length;
+  const totalAutorizadoVED = useMemo(() => {
+    return filteredPays
+      .filter((d) => d.monedaautorizada === 'VED' && d.autorizadopagar === '1')
+      .reduce((acc, item) => acc + parseFloat(item.montoautorizado), 0);
+  }, [filteredPays]);
 
+  const totalAutorizadoUSD = useMemo(() => {
+    return filteredPays
+      .filter((d) => d.monedaautorizada === 'USD' && d.autorizadopagar === '1')
+      .reduce((acc, item) => acc + parseFloat(item.montoautorizado), 0);
+  }, [filteredPays]);
 
+  const totalDocumentsAuth = useMemo(() => {
+    return filteredPays.filter((d) => d.autorizadopagar === '1').length;
+  }, [filteredPays]);
 
+  // Refresh
+  const handleRefresh = useCallback(() => {
+    wrapRefresh(
+      () => getPaysToAuthorize().then(setPays),
+      () => setError("Ocurrió un error al cargar los datos...")
+    );
+  }, [wrapRefresh]);
 
-
+  // Initia
   useEffect(() => {
     getPaysToAuthorize()
       .then(setPays)
-      .catch()
+      .catch(() => setError("Error inicial"))
       .finally(() => setLoading(false));
   }, []);
 
-  return { pays, loading, totalAutorizadoUSD, totalAutorizadoVED,totalDocumentsAuth };
+  return {
+    pays,
+    filteredPays,
+    loading,
+    totalAutorizadoUSD,
+    totalAutorizadoVED,
+    totalDocumentsAuth,
+    handleRefresh,
+    refreshing,
+    cooldown,
+    canRefresh,
+    error,
+  };
 }

@@ -15,7 +15,7 @@ import { useOrderModals } from "./useOrderModals";
 
 export function useOrderApproval(searchText: string) {
   /* -------------------------------------------------------------------------- */
-  /*                                  ESTADOS                                  */
+  /*                                                            */
   /* -------------------------------------------------------------------------- */
   const [ordersAproval, setOrdersAproval] = useState<OrderApproval[]>([]);
   const [orders, setOrders] = useState<OrderApproval[]>([]); // uso local con JSON
@@ -37,8 +37,6 @@ export function useOrderApproval(searchText: string) {
   // const [canRefresh, setCanRefresh] = useState(true);
   // const [cooldown, setCooldown] = useState(0);
   // const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // filtros
 
   const [sortDate, setSortDate] = useState(false);
   const [sortMount, setSortMount] = useState(false);

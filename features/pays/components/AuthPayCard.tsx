@@ -1,151 +1,262 @@
-import { useThemeStore } from '@/stores/useThemeStore';
-import { dateMonthText } from '@/utils/datesFormat';
-import { totalVenezuela } from '@/utils/moneyFormat';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { LayoutAnimation, Platform, Pressable, Text, View } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
-import { AuthPay } from '../types/AuthPay';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useEffect } from "react";
+import { Pressable, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+
+import { dateMonthText } from "@/utils/datesFormat";
+import { currencyDollar, currencyVES, totalVenezuela } from "@/utils/moneyFormat";
+import { AuthPay } from "../types/AuthPay";
 
 interface Props {
   item: AuthPay;
-  onPress?: (item: AuthPay) => void; 
+  selected?: boolean;
+  selectionMode?: boolean;
+  onSelect?: (auth: AuthPay) => void;
+  onPress?: (item: AuthPay) => void;
 }
 
-export default function AuthPayCard({ item, onPress }: Props) {
-  const { theme } = useThemeStore();
-  const [isExpanded, setIsExpanded] = useState(false);
+export default function AuthPayCard({
+  item,
+  selected = false,
+  selectionMode = false,
+  onSelect,
+  onPress,
+}: Props) {
+  const isAuth = item.autorizadopagar === "1";
+  const currencyBs = item.monedaautorizada === "VED";
 
-  const toggleExpand = () => {
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  /* ANIMATION VALUES (VISIBLE BY DEFAULT) */
+  const checkboxTranslateX = useSharedValue(-12);
+  const checkboxOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(1);
+
+  /* Effecs to show /hide checkbox*/
+  useEffect(() => {
+    if (selectionMode) {
+      checkboxTranslateX.value = withTiming(0, { duration: 300 });
+      checkboxOpacity.value = withTiming(1, { duration: 150 });
+    } else {
+      checkboxTranslateX.value = withTiming(-12, { duration: 250 });
+      checkboxOpacity.value = withTiming(0, { duration: 100 });
     }
-    setIsExpanded(!isExpanded);
+  }, [selectionMode]);
+
+  useEffect(() => {
+    cardScale.value = withTiming(selected ? 0.98 : 1, { duration: 150 });
+  }, [selected]);
+
+  /* ANIMATED STYLES*/
+  const checkboxStyle = useAnimatedStyle(() => ({
+    opacity: checkboxOpacity.value,
+    transform: [{ translateX: checkboxTranslateX.value }],
+  }));
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  /* HANDLERS*/
+  const handlePress = () => {
+    if (selectionMode) {
+      onSelect?.(item);
+    } else {
+      onPress?.(item);
+    }
   };
 
-  const isAuth = item.autorizadopagar === '1';
-
   return (
-    <Pressable
-      onPress={() => onPress?.(item)} 
-      className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-5 mb-4 border border-gray-200 dark:border-gray-700 shadow-xs active:scale-[0.99] gap-1.5 "
-    >
-      {/* Beneficiario */}
-      <Text className="text-xl font-bold text-foreground dark:text-dark-foreground mb-2">
-        {item.beneficiario}
-      </Text>
-
-      {/* Chips */}
-      <View className="flex-row flex-wrap gap-2 mb-3">
-        <View className="px-3 py-1 rounded-full bg-primary dark:bg-dark-primary">
-          <Text className="text-xs font-medium text-white">{item.empresa}</Text>
-        </View>
-        <View className="px-3 py-1 rounded-full bg-secondary dark:bg-dark-secondary">
-          <Text className="text-xs font-medium text-white">{item.clasegasto}</Text>
-        </View>
-      </View>
-
-      {/* Montos */}
-      <View className="flex-row justify-between">
-        <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400">Saldo documento</Text>
-          <Text className="text-lg font-semibold text-black dark:text-white">
-            {totalVenezuela(item.montoneto)} {item.moneda}
-          </Text>
-        </View>
-        <View>
-          <Text className="text-sm text-gray-500 dark:text-gray-400">Tasa documento</Text>
-          <Text className="text-sm font-medium text-black dark:text-white">
-            {totalVenezuela(item.tasacambio)} Bs
-          </Text>
-        </View>
-      </View>
-
-      {/* Estado de autorización */}
-      {isAuth ? (
-        <View className="flex-row justify-between items-start">
-          <View>
-            <Text className="text-sm text-gray-500 dark:text-gray-400">Monto autorizado</Text>
-            <Text className="text-lg font-bold text-green-600 dark:text-green-400">
-              {totalVenezuela(item.montoautorizado)} {item.monedaautorizada}
-            </Text>
-          </View>
-          <View>
-            <Text className="text-sm text-gray-500 dark:text-gray-400">Tasa autorizada</Text>
-            <Text className="text-sm font-medium text-black dark:text-white">
-              {totalVenezuela(item.tasaautorizada)} Bs
-            </Text>
-          </View>
-        </View>
-      ) : (
-        <View className="self-center px-3 py-1  rounded-lg bg-warning dark:bg-dark-warning flex-row items-center">
-          <MaterialIcons name="cancel" size={16} color={theme === 'dark' ? '#555' : 'white'} />
-          <Text className="ml-2 text-sm font-semibold text-white dark:text-gray-700">No autorizado</Text>
-        </View>
-      )}
-
-      {/* Banco */}
-      {isAuth && (
-        <Text className="text-sm text-gray-500 dark:text-gray-400 ">
-          Banco pagador: <Text className="font-medium text-black dark:text-white">{item.bancopagador}</Text>
-        </Text>
-      )}
-
-      {/* Detalles */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="pt-2"
-        contentContainerStyle={{ gap: 20 }}
+    <Animated.View style={cardStyle}>
+      <Pressable
+        onPress={handlePress}
+        className={`
+          mb-4 rounded-2xl 
+          ${
+            selected
+              ? "border border-primary bg-primary/5 dark:bg-dark-primary/10"
+              : "bg-componentbg dark:bg-dark-componentbg"
+          }
+          
+        `}
       >
-        {[
-          {
-            icon: <MaterialCommunityIcons name="file-document" size={16} color="#666" />,
-            label: 'Documento',
-            value: `${item.tipodocumento}-${item.numerodocumento}`,
-          },
-          {
-            icon: <MaterialIcons name="calendar-today" size={16} color="#666" />,
-            label: 'Emisión',
-            value: dateMonthText(item.fechaemision),
-          },
-          {
-            icon: <MaterialIcons name="calendar-month" size={16} color="#666" />,
-            label: 'Vencimiento',
-            value: dateMonthText(item.fechavencimiento),
-          },
-          {
-            icon: <MaterialCommunityIcons name="account-check" size={16} color="#666" />,
-            label: 'Registrado por',
-            value: item.registradopor,
-          },
-        ].map((d, i) => (
-          <View key={i}>
-            {d.icon}
-            <Text className="text-sm text-gray-500 dark:text-gray-400">{d.label}</Text>
-            <Text className="text-sm text-black dark:text-white">{d.value}</Text>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Observación */}
-      {item.observacion && (
-        <View className="">
-          <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">Observación</Text>
-          <Text className="text-sm text-black dark:text-white">
-            {isExpanded
-              ? item.observacion
-              : `${item.observacion.slice(0, 80)}${item.observacion.length > 80 ? '...' : ''}`}
-          </Text>
-          {item.observacion.length > 80 && (
-            <Pressable onPress={toggleExpand}>
-              <Text className="text-primary dark:text-dark-primary text-xs mt-1">
-                Ver {isExpanded ? 'menos' : 'más'}
-              </Text>
-            </Pressable>
+        <View className="flex-row px-4 py-4">
+          {/*  CHECKBOX  */}
+          {selectionMode && (
+            <Animated.View
+              style={checkboxStyle}
+              className=" justify-center me-1"
+            >
+              <Pressable
+                onPress={() => onSelect?.(item)}
+                className={`
+                  w-6 h-6 rounded-full border items-center justify-center
+                  ${
+                    selected
+                      ? "bg-primary border-primary"
+                      : "border-gray-400 dark:border-gray-500"
+                  }
+                `}
+              >
+                {selected && (
+                  <MaterialCommunityIcons
+                    name="check"
+                    size={16}
+                    color="white"
+                  />
+                )}
+              </Pressable>
+            </Animated.View>
           )}
+
+          {/*  CONTENT  */}
+          <View className="flex-1 space-y-3">
+            {/* Header */}
+            <View className="flex-row justify-between items-start">
+              <Text
+                numberOfLines={2}
+                className="flex-1 text-base font-bold text-foreground dark:text-dark-foreground"
+              >
+                {item.beneficiario}
+              </Text>
+
+              <View
+                className={`
+                  px-3 py-1 rounded-full
+                  ${
+                    isAuth
+                      ? "bg-green-100 dark:bg-green-900"
+                      : "bg-amber-500 dark:bg-yellow-900"
+                  }
+                `}
+              >
+                <Text
+                  className={`
+                    text-xs font-semibold
+                    ${
+                      isAuth
+                        ? "text-green-700 dark:text-green-300"
+                        : "text-white dark:text-yellow-300"
+                    }
+                  `}
+                >
+                  {isAuth ? "Autorizado" : "No Autorizado"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Chips */}
+            <View className="flex-row flex-wrap gap-2 mt-1">
+              {[item.empresa, item.clasegasto].map(
+                (label) =>
+                  label && (
+                    <View
+                      key={label}
+                      className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700"
+                    >
+                      <Text className="text-xs text-gray-600 dark:text-gray-300">
+                        {label}
+                      </Text>
+                    </View>
+                  )
+              )}
+            </View>
+
+            {/* Meta */}
+            <View className="space-y-1">
+              {isAuth && (
+                <Text className="text-sm  text-gray-500 dark:text-gray-400">
+                  Banco pagador{" "}
+                  <Text className="font-medium text-black dark:text-white">
+                    {item.bancopagador}
+                  </Text>
+                </Text>
+              )}
+
+              <Text className="text-sm  text-gray-500 dark:text-gray-400">
+                Fecha{" "}
+                <Text className="font-medium text-black dark:text-white">
+                  {dateMonthText(item.fechaemision)}
+                </Text>
+              </Text>
+            </View>
+
+            {/* Amounts */}
+            <View className="rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 gap-y-1 my-1">
+              <View className="flex-row justify-between">
+                <View>
+                  <Text className="text-xs  text-gray-500 dark:text-gray-400">
+                    Total saldo
+                  </Text>
+                  <Text className="text-lg font-semibold text-black dark:text-white">
+                    {totalVenezuela(item.montoneto)} {item.moneda}
+                  </Text>
+                </View>
+
+                <View className="items-end">
+                  <Text className="text-xs  text-gray-500 dark:text-gray-400">
+                    Tasa
+                  </Text>
+                  <Text className="text-sm font-medium text-black dark:text-white">
+                    {totalVenezuela(item.tasacambio)}
+                  </Text>
+                </View>
+              </View>
+
+              {isAuth && (
+                <View className="flex-row justify-between">
+                  <View>
+                    <Text className="text-xs  text-gray-500 dark:text-gray-400">
+                      Monto autorizado
+                    </Text>
+                    <View className="flex-row gap-x-1 items-baseline">
+                      <Text className="text-2xl font-black text-primary dark:text-dark-primary">
+                        {currencyBs ? currencyVES : currencyDollar}
+                      </Text>
+
+                      <Text className="text-lg font-black text-primary dark:text-green-400">
+                        {totalVenezuela(item.montoautorizado)}{" "}
+                        {item.monedaautorizada}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="items-end">
+                    <Text className="text-xs  text-gray-500 dark:text-gray-400">
+                      Tasa autorizada
+                    </Text>
+                    <Text className="text-sm font-medium pt-1 text-black dark:text-white">
+                      {totalVenezuela(item.tasaautorizada)}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Obs */}
+            <View className="space-y-1">
+              {!isAuth && (
+                <View className="flex-row items-center">
+                  <Text className="text-sm  text-gray-500 dark:text-gray-400 mr-2">
+                    Preferible pagar
+                  </Text>
+                  <Text className="text-sm font-semibold text-black dark:text-white">
+                    EURO TASA BCV
+                  </Text>
+                </View>
+              )}
+              <Text
+                numberOfLines={3}
+                className="text-xs  text-gray-500 dark:text-gray-400"
+              >
+                {item.observacion}
+              </Text>
+            </View>
+          </View>
         </View>
-      )}
-    </Pressable>
+      </Pressable>
+    </Animated.View>
   );
 }
