@@ -1,98 +1,195 @@
-
-import CustomPicker from '@/components/inputs/CustomPicker';
-import RateInput from '@/components/inputs/RateInput';
-import BottomModal from '@/components/ui/BottomModal';
-import Loader from '@/components/ui/Loader';
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { AuthPay } from '../types/AuthPay';
+import CustomPicker from "@/components/inputs/CustomPicker";
+import CustomTextInput from "@/components/inputs/CustomTextInput";
+import RateInput from "@/components/inputs/RateInput";
+import BottomModal from "@/components/ui/BottomModal";
+import { useSuccessOverlayStore } from "@/stores/useSuccessOverlayStore";
+import {
+  currencyDollar,
+  currencyVES,
+  totalVenezuela,
+} from "@/utils/moneyFormat";
+import { useEffect, useMemo, useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { AuthPay } from "../types/AuthPay";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  item?: AuthPay[];
+  items: AuthPay[];
   onAuthorize: () => void;
-
 }
-//TODO: create custom preseable
+
 export default function AuthPayModal({
   visible,
   onClose,
-  item = [],
+  items,
   onAuthorize,
 }: Props) {
-  const [tasa, setTasa] = useState<number>(0.0);
-  const [formaPago, setformaPago] = useState<string>("");
+  const [tasa, setTasa] = useState<number>(0);
+  const [amount, setAmount] = useState<string>("0");
+  const [formaPago, setFormaPago] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const showSuccess = useSuccessOverlayStore((s) => s.show);
+  useEffect(() => {
+    if (visible) {
+      setFormaPago("");
+      setIsLoading(false);
+      setShowErrors(false);
+    }
+  }, [visible]);
 
-  if (!item || item.length === 0) {
-    return <Loader />;
-  }
+  useEffect(() => {
+    const { totalVedToUsd, totalUsdToVed } = calculateAmount();
+
+    if (formaPago === "USD") {
+      setAmount(totalVedToUsd.toFixed(2));
+    } else if (formaPago === "VED") {
+      setAmount(totalUsdToVed.toFixed(2));
+    } else {
+      setAmount("0");
+    }
+  }, [tasa, formaPago, items]);
+  const calculateAmount = () => {
+    return items.reduce(
+      (acc, i) => {
+        const monto = Number(i.montosaldo);
+
+        if (i.moneda === "VED") {
+          acc.totalVedToUsd += tasa > 0 ? monto / tasa : 0;
+        }
+
+        if (i.moneda === "USD") {
+          acc.totalUsdToVed += tasa > 0 ? monto * tasa : 0;
+        }
+
+        return acc;
+      },
+      { totalVedToUsd: 0, totalUsdToVed: 0 }
+    );
+  };
+  const totalVed = useMemo(
+    () =>
+      items
+        .filter((p) => p.moneda === "VED")
+        .reduce((sum, p) => sum + Number(p.montosaldo), 0),
+    [items]
+  );
+
+  const totalUSD = useMemo(
+    () =>
+      items
+        .filter((p) => p.moneda === "USD")
+        .reduce((sum, p) => sum + Number(p.montosaldo), 0),
+    [items]
+  );
+
+  const isValid = formaPago !== "" && tasa > 0;
+
+  if (!visible || items.length === 0) return null;
+
+  const handleAuthorize = async () => {
+    if (!isValid) {
+      setShowErrors(true);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      await onAuthorize();
+
+      showSuccess({
+        title: "Pagos autorizados",
+        subtitle: `${items.length} documentos aprobados`,
+      });
+
+      onClose();
+    } catch (e) {
+
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <BottomModal visible={visible} onClose={onClose} heightPercentage={0.85}>
-      <ScrollView className="flex-1 px-1" keyboardShouldPersistTaps="handled">
-        {/* Resumen de múltiples documentos */}
+    <BottomModal
+      visible={visible}
+      onClose={isLoading ? () => {} : onClose}
+      heightPercentage={0.85}
+    >
+      <ScrollView className="flex-1 px-3" keyboardShouldPersistTaps="handled">
         <View className="gap-2 bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
-          <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
-            Documentos seleccionados: {item.length}
+          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+            Autorización de pagos
           </Text>
-         
-          <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
-            Saldo total  {item.reduce((sum, pay) => sum + Number(pay.montosaldo), 0)}
+
+          <Text className="text-sm text-muted-foreground">
+            Documentos seleccionados: {items.length}
           </Text>
-         
+
+          <Text className="text-xl font-bold text-primary">
+            Total VED: {totalVenezuela(totalVed)} {currencyVES}
+          </Text>
+          <Text className="text-xl font-bold text-primary">
+            Total USD: {totalVenezuela(totalUSD)} {currencyDollar}
+          </Text>
         </View>
 
-        {/* Inputs comunes para todos */}
-        <View className="gap-2 bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4">
-          <View className="gap-1">
-            <Text className="text-md font-semibold text-foreground dark:text-dark-foreground">
-              Forma de Pago
-            </Text>
-            <CustomPicker
-              selectedValue={formaPago}
-              onValueChange={setformaPago}
-              items={[
-                { label: "USD - Banco", value: "USD" },
-                { label: "EUR - Banco", value: "EUR" },
-                { label: "VED - Banco", value: "VED" },
-              ]}
-              icon="money"
-              placeholder="Seleccione moneda"
-              error="Debe elegir una moneda"
-            />
-          </View>
+        <View className="gap-3 bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4">
+          <CustomPicker
+            selectedValue={formaPago}
+            onValueChange={setFormaPago}
+            items={[
+              { label: "USD - Banco", value: "USD" },
+              { label: "EUR - Banco", value: "EUR" },
+              { label: "VED - Banco", value: "VED" },
+            ]}
+            placeholder="Seleccione moneda"
+            error={
+              showErrors && !formaPago
+                ? "Seleccione una forma de pago"
+                : undefined
+            }
+          />
 
-          <View className="gap-1">
-            <Text className="text-md font-semibold text-foreground dark:text-dark-foreground">
-              Tasa autorizada
-            </Text>
-            <RateInput value={tasa} onChangeValue={setTasa} />
-          </View>
+          <RateInput value={tasa} onChangeValue={setTasa} />
+
+          <CustomTextInput
+            placeholder="Monto autorizado"
+            value={totalVenezuela(amount)}
+            onChangeText={setAmount}
+            editable={false}
+          />
         </View>
       </ScrollView>
 
-      {/* Botones de acción */}
       <View className="px-4 pb-6 gap-2">
-        <Pressable
-          onPress={() => {
-            setIsLoading(true);
-            onAuthorize(); // aquí puedes pasar item.map(d => d.numerodocumento)
-          }}
-          className="bg-primary dark:bg-dark-primary rounded-lg px-4 py-3"
+        <TouchableOpacity
+          className={`rounded-xl py-3 mt-2 flex-row justify-center items-center ${isValid ? "bg-primary dark:bg-dark-primary" : "bg-gray-400"}`}
+          disabled={isLoading}
+          onPress={handleAuthorize}
         >
-          <Text className="text-center text-white font-semibold">
-            {isLoading ? "Autorizando..." : `Autorizar (${item.length})`}
+          <Text className="text-center text-lg text-white font-bold">
+            {isLoading ? "Autorizando..." : `Autorizar (${items.length})`}
           </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={onClose}
-          className="bg-gray-600 dark:bg-gray-500 rounded-lg px-4 py-3"
+        </TouchableOpacity>
+        <TouchableOpacity
+          className={`rounded-xl py-3 mt-2 flex-row justify-center items-center bg-amber-500 dark:bg-dark-accent-light`}
+          onPress={handleAuthorize}
         >
-          <Text className="text-center text-white font-semibold">Cancelar</Text>
-        </Pressable>
+          <Text className="text-center text-lg text-white font-bold">
+            Desautorizar
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className={`rounded-xl py-3 mt-2 flex-row justify-center items-center bg-error dark:bg-dark-error`}
+          onPress={onClose}
+        >
+          <Text className="text-center text-lg text-white font-bold">
+            Cancelar
+          </Text>
+        </TouchableOpacity>
       </View>
     </BottomModal>
   );

@@ -14,7 +14,7 @@ interface Props {
   onAuthorize: () => void;
 
 }
-//TODO: create custom preseable
+
 export default function AuthPayModal({ visible, onClose, item, onAuthorize }: Props) {
 
   const [tasa, setTasa] = useState<number>(0.00);
@@ -29,8 +29,6 @@ export default function AuthPayModal({ visible, onClose, item, onAuthorize }: Pr
 
   return (
     <BottomModal visible={visible} onClose={onClose} heightPercentage={0.85}>
-
-
 
 
         <ScrollView className="flex-1 px-1 "

@@ -8,7 +8,11 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { dateMonthText } from "@/utils/datesFormat";
-import { currencyDollar, currencyVES, totalVenezuela } from "@/utils/moneyFormat";
+import {
+  currencyDollar,
+  currencyVES,
+  totalVenezuela,
+} from "@/utils/moneyFormat";
 import { AuthPay } from "../types/AuthPay";
 
 interface Props {
@@ -82,8 +86,8 @@ export default function AuthPayCard({
           
         `}
       >
-        <View className="flex-row px-4 py-4">
-          {/*  CHECKBOX  */}
+        <View className={`flex-row ${selectionMode?`ps-1 `:`ps-4` } pe-4 py-4`}>
+   
           {selectionMode && (
             <Animated.View
               style={checkboxStyle}
@@ -168,16 +172,16 @@ export default function AuthPayCard({
             <View className="space-y-1">
               {isAuth && (
                 <Text className="text-sm  text-gray-500 dark:text-gray-400">
-                  Banco pagador{" "}
-                  <Text className="font-medium text-black dark:text-white">
-                    {item.bancopagador}
+                  Autorizado con{" "}
+                  <Text className="font-medium text-foreground dark:text-dark-foreground">
+                    {item.metodopago} {item.empresapagadora} {item.bancopagador}
                   </Text>
                 </Text>
               )}
 
               <Text className="text-sm  text-gray-500 dark:text-gray-400">
                 Fecha{" "}
-                <Text className="font-medium text-black dark:text-white">
+                <Text className="font-medium text-foreground dark:text-dark-foreground">
                   {dateMonthText(item.fechaemision)}
                 </Text>
               </Text>
@@ -212,11 +216,15 @@ export default function AuthPayCard({
                       Monto autorizado
                     </Text>
                     <View className="flex-row gap-x-1 items-baseline">
-                      <Text className="text-2xl font-black text-primary dark:text-dark-primary">
+                      <Text
+                        className={`text-2xl font-black ${currencyBs ? `text-primary dark:text-green-400` : `text-green-500 dark:text-green-300`}`}
+                      >
                         {currencyBs ? currencyVES : currencyDollar}
                       </Text>
 
-                      <Text className="text-lg font-black text-primary dark:text-green-400">
+                      <Text
+                        className={`text-xl font-bold ${currencyBs ? `text-primary dark:text-green-400` : `text-green-500 dark:text-green-300`} `}
+                      >
                         {totalVenezuela(item.montoautorizado)}{" "}
                         {item.monedaautorizada}
                       </Text>

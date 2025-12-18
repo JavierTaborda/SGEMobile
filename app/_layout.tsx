@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/providers/AuthProvider";
+import Overlay from "@/providers/Overlay";
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -12,6 +13,7 @@ export default function RootLayout() {
         <AuthProvider>
           <StatusBar style="auto" />
           <Slot />
+          <Overlay/>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

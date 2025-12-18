@@ -3,7 +3,6 @@ import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 
 import ScreenSearchLayout from "@/components/screens/ScreenSearchLayout";
 import CustomFlatList from "@/components/ui/CustomFlatList";
-import Loader from "@/components/ui/Loader";
 import { useAuthPays } from "@/features/pays/hooks/useAuthPays";
 import { totalVenezuela } from "@/utils/moneyFormat";
 
@@ -20,6 +19,7 @@ import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import AuthPayCard from "../components/AuthPayCard";
 import AuthPayModal from "../components/AuthPayModal";
+import AuthPaySkeleton from "../components/AuthPaySkeleton";
 import AuthSelectModal from "../components/AuthSelectModal";
 import FiltersModal from "../components/PayFilterModal";
 import { AuthPay } from "../types/AuthPay";
@@ -125,10 +125,8 @@ export default function AuthorizationScreen() {
     // setAuthModalVisible(false);
   };
 
-  if (loading) return <Loader />;
-
-  return (
-    <>
+  const screenLayout=()=>{
+    return (
       <ScreenSearchLayout
         searchText={searchText}
         setSearchText={setSearchText}
@@ -148,7 +146,7 @@ export default function AuthorizationScreen() {
                 ? "bg-primary/10 dark:bg-dark-primary/20 border border-primary/30"
                 : "bg-componentbg dark:bg-dark-componentbg"
             }
-          `}
+          `}    
         >
           {/* Left */}
           <View className="flex-row items-center gap-2">
@@ -249,14 +247,20 @@ export default function AuthorizationScreen() {
           )}
         />
       </ScreenSearchLayout>
+    );
+  }
 
+
+  return (
+    <>
+      {loading ? <AuthPaySkeleton /> : screenLayout()}
       <Animated.View
         style={[
           {
             position: "absolute",
             bottom: 100,
             marginHorizontal: "auto",
-            paddingHorizontal: 24,
+                paddingHorizontal: 24,
             width: "65%",
           },
           floatingStyle,
@@ -305,10 +309,16 @@ export default function AuthorizationScreen() {
           onAuthorize={handleAuthorize}
         />
       )}
-      {authSelectModalVisible &&(
+      {authSelectModalVisible && (
         <AuthSelectModal
           visible={authSelectModalVisible}
-          item={ selectedIds.length > 0 ? selectedIds : selectedItem ? [selectedItem] : [] }
+          items={
+            selectedIds.length > 0
+              ? selectedIds
+              : selectedItem
+                ? [selectedItem]
+                : []
+          }
           onClose={() => setAuthSelectModalVisible(false)}
           onAuthorize={handleAuthorize}
         />
