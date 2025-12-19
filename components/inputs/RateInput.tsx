@@ -1,5 +1,6 @@
+import { useThemeStore } from "@/stores/useThemeStore";
 import { appTheme } from "@/utils/appTheme";
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from "@expo/vector-icons";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
@@ -13,6 +14,7 @@ export default function RateInput({
   placeholder?: string;
 }) {
   const [touched, setTouched] = useState(false);
+  const {isDark} = useThemeStore(); 
 
   const isValid = !isNaN(value) && value >= 0;
 
@@ -26,13 +28,13 @@ export default function RateInput({
         <FontAwesome
           name="money"
           size={20}
-          color={touched && !isValid ? appTheme.error : appTheme.placeholdercolor}
+          color={touched && !isValid ? appTheme.error : (isDark ? appTheme.dark.primary.DEFAULT: appTheme.primary.DEFAULT)}
         />
         <TextInput
-          className="flex-1 p-4 text-black dark:text-white"
+          className="flex-1 px-2 py-4 text-black dark:text-white"
           placeholder={placeholder}
           value={value?.toString()}
-          placeholderTextColor={appTheme.placeholdercolor}
+          placeholderTextColor={isDark ?appTheme.dark.placeholdercolor:  appTheme.placeholdercolor }
           keyboardType="decimal-pad"
           onBlur={() => setTouched(true)}
           onChangeText={(text) => {

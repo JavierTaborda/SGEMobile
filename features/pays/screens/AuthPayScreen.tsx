@@ -1,22 +1,21 @@
-import { useEffect, useState } from "react";
+import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
-
-import ScreenSearchLayout from "@/components/screens/ScreenSearchLayout";
-import CustomFlatList from "@/components/ui/CustomFlatList";
-import { useAuthPays } from "@/features/pays/hooks/useAuthPays";
-import { totalVenezuela } from "@/utils/moneyFormat";
-
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 
+import ScreenSearchLayout from "@/components/screens/ScreenSearchLayout";
+import CustomFlatList from "@/components/ui/CustomFlatList";
+import { useAuthPays } from "@/features/pays/hooks/useAuthPays";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { appTheme } from "@/utils/appTheme";
+import { totalVenezuela } from "@/utils/moneyFormat";
 import { safeHaptic } from "@/utils/safeHaptics";
-import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
 
+import ErrorView from "@/components/ui/ErrorView";
 import AuthPayCard from "../components/AuthPayCard";
 import AuthPayModal from "../components/AuthPayModal";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
@@ -25,14 +24,20 @@ import FiltersModal from "../components/PayFilterModal";
 import { AuthPay } from "../types/AuthPay";
 
 export default function AuthorizationScreen() {
+  /* ================================
+     STATE
+  ================================= */
   const [searchText, setSearchText] = useState("");
-    const [company, setCompany] = useState("CYBERLUX");
-    const [authorized, setAuthorized] = useState(false);
-    const [currency, setCurrency] = useState("VED");
+  const [company, setCompany] = useState("CYBERLUX");
+  const [authorized, setAuthorized] = useState(false);
+  const [currency, setCurrency] = useState("VED");
+
+  const { isDark } = useThemeStore();
 
   const {
     filteredPays,
     loading,
+    methods,
     totalDocumentsAuth,
     totalAutorizadoUSD,
     totalAutorizadoVED,
@@ -40,93 +45,97 @@ export default function AuthorizationScreen() {
     refreshing,
     cooldown,
     canRefresh,
+    error,
   } = useAuthPays(searchText);
 
-  const { isDark } = useThemeStore();
-
-  // Modals
+  // MODALS
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authSelectModalVisible, setAuthSelectModalVisible] = useState(false);
 
-  // Selection
+  //Selects
+
   const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<AuthPay[]>([]);
+  const [selectedItems, setSelectedItems] = useState<AuthPay[]>([]);
   const [selectedItem, setSelectedItem] = useState<AuthPay | null>(null);
 
-  /* ------------------------------------------------------------------
-     HEADER ANIMATION
-  ------------------------------------------------------------------ */
-  const headerTranslateY = useSharedValue(0);
-  const headerOpacity = useSharedValue(1);
+  //     HEADER ANIMATION
+
   const headerScale = useSharedValue(1);
+
   useEffect(() => {
-    if (selectionMode) {
-      headerScale.value = withTiming(1.02, { duration: 200 });
-    } else {
-      headerScale.value = withTiming(1, { duration: 200 });
-    }
+    headerScale.value = withTiming(selectionMode ? 1.02 : 1, {
+      duration: 200,
+    });
   }, [selectionMode]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-    transform: [
-      { translateY: headerTranslateY.value },
-      { scale: headerScale.value },
-    ],
+    transform: [{ scale: headerScale.value }],
   }));
 
-  /* ------------------------------------------------------------------
-     FLOATING BUTTON ANIMATION
-  ------------------------------------------------------------------ */
+  //  FLOATING Btton
   const { height } = Dimensions.get("window");
-  const translateY = useSharedValue(height);
-  const opacity = useSharedValue(0);
+  const ctaTranslateY = useSharedValue(height);
+  const ctaOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (selectionMode) {
-      translateY.value = withTiming(0, { duration: 300 });
-      opacity.value = withTiming(1, { duration: 200 });
+      ctaTranslateY.value = withTiming(0, { duration: 300 });
+      ctaOpacity.value = withTiming(1, { duration: 200 });
     } else {
-      translateY.value = withTiming(height, { duration: 300 });
-      opacity.value = withTiming(0, { duration: 200 });
+      ctaTranslateY.value = withTiming(height, { duration: 300 });
+      ctaOpacity.value = withTiming(0, { duration: 200 });
     }
   }, [selectionMode]);
 
   const floatingStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
+    transform: [{ translateY: ctaTranslateY.value }],
+    opacity: ctaOpacity.value,
   }));
 
-  /* ------------------------------------------------------------------
-     HANDLERS
-  ------------------------------------------------------------------ */
-  const toggleSelect = (item: AuthPay) => {
+  //  HANDLERS
+
+  const toggleSelect = useCallback((item: AuthPay) => {
     safeHaptic("selection");
     setSelectionMode(true);
-    setSelectedIds((prev) =>
-      prev.includes(item)
-        ? prev.filter((x) => x !== item)
-        : [...prev, item]
+    setSelectedItems((prev) =>
+      prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
     );
-  };
+  }, []);
 
-  const handleOpenAuthModal = (item: AuthPay) => {
-    if (selectionMode) return;
-    setSelectedItem(item);
-    setAuthModalVisible(true);
-  };
+  const handleOpenAuthModal = useCallback(
+    (item: AuthPay) => {
+      if (selectionMode) return;
+      setSelectedItem(item);
+      setAuthModalVisible(true);
+    },
+    [selectionMode]
+  );
 
-  const handleAuthorize = () => {
-   setAuthSelectModalVisible(true);
+  const handleAuthorize = useCallback(() => {
+    setAuthSelectModalVisible(true);
+  }, []);
 
-    // setSelectedIds([]);
-    // setSelectionMode(false);
-    // setAuthModalVisible(false);
-  };
+  const exitSelectionMode = useCallback(() => {
+    safeHaptic("selection");
+    setSelectionMode(false);
+    setSelectedItems([]);
+  }, []);
 
-  const screenLayout=()=>{
-    return (
+  //     HEADER TEXT
+
+  const headerTitle = useMemo(() => {
+    if (!selectionMode) return `${totalDocumentsAuth} documentos`;
+    return `${selectedItems.length}/${totalDocumentsAuth} documentos`;
+  }, [selectionMode, selectedItems.length, totalDocumentsAuth]);
+
+  //     RENDER
+
+  if (loading) return <AuthPaySkeleton />;
+  if (error) return <ErrorView error={error} getData={handleRefresh} />;
+
+  return (
+    <>
       <ScreenSearchLayout
         searchText={searchText}
         setSearchText={setSearchText}
@@ -135,7 +144,7 @@ export default function AuthorizationScreen() {
         extrafilter={false}
         headerVisible={false}
       >
-        {/*HEADER*/}
+        {/* HEADER */}
         <Animated.View
           style={headerAnimatedStyle}
           className={`
@@ -143,16 +152,15 @@ export default function AuthorizationScreen() {
             flex-row items-center justify-between
             ${
               selectionMode
-                ? "bg-primary/10 dark:bg-dark-primary/20 border border-primary/30"
+                ? "bg-primary/10 dark:bg-dark-primary/30 border border-primary/30"
                 : "bg-componentbg dark:bg-dark-componentbg"
             }
-          `}    
+          `}
         >
-          {/* Left */}
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-3">
             <View
               className={`
-                w-8 h-8 rounded-xl items-center justify-center
+                w-9 h-9 rounded-xl items-center justify-center
                 ${
                   selectionMode
                     ? "bg-primary dark:bg-dark-primary"
@@ -160,33 +168,27 @@ export default function AuthorizationScreen() {
                 }
               `}
             >
-              <Entypo name={"documents"} size={20} color="white" />
+              <Entypo name="documents" size={20} color="white" />
             </View>
 
             <View>
               <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
-                {selectionMode
-                  ? `${selectedIds.length}/${totalDocumentsAuth} documentos`
-                  : `${totalDocumentsAuth} documentos`}
+                {headerTitle}
               </Text>
-
               <Text className="text-xs text-gray-500 dark:text-gray-400">
                 {selectionMode
-                  ? "Selecione documentos a autorizar"
+                  ? "Selecciona documentos a autorizar"
                   : "Pagos pendientes de autorización"}
               </Text>
             </View>
           </View>
 
-          {/* Right */}
           <TouchableOpacity
-            onPress={() => {
-              setSelectionMode(!selectionMode);
-              setSelectedIds([]);
-              safeHaptic("selection");
-            }}
+            onPress={
+              selectionMode ? exitSelectionMode : () => setSelectionMode(true)
+            }
             className={`
-              px-2 py-2 rounded-xl flex-row items-center gap-2
+              px-3 py-2 rounded-xl flex-row items-center gap-2
               ${
                 selectionMode
                   ? "bg-red-500/10 border border-red-500"
@@ -195,11 +197,7 @@ export default function AuthorizationScreen() {
             `}
           >
             <MaterialCommunityIcons
-              name={
-                selectionMode
-                  ? "checkbox-multiple-marked-outline"
-                  : "checkbox-multiple-marked-outline"
-              }
+              name="checkbox-multiple-marked-outline"
               size={18}
               color={
                 selectionMode
@@ -210,20 +208,18 @@ export default function AuthorizationScreen() {
               }
             />
             <Text
-              className={`
-                font-semibold text-sm
-                ${
-                  selectionMode
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-primary dark:text-dark-primary"
-                }
-              `}
+              className={`font-semibold text-sm ${
+                selectionMode
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-primary dark:text-dark-primary"
+              }`}
             >
               {selectionMode ? "Cancelar" : "Seleccionar"}
             </Text>
           </TouchableOpacity>
         </Animated.View>
 
+        {/* LIST */}
         <CustomFlatList
           data={filteredPays}
           keyExtractor={(item, index) => `${item.numerodocumento}-${index}`}
@@ -233,58 +229,58 @@ export default function AuthorizationScreen() {
           cooldown={cooldown}
           showtitle
           title="Total autorizado"
-          subtitle={`${totalVenezuela(
-            totalAutorizadoVED
-          )} VED / ${totalVenezuela(totalAutorizadoUSD)} $`}
+          subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
+            totalAutorizadoUSD
+          )} $`}
           renderItem={({ item }) => (
             <AuthPayCard
               item={item}
               selectionMode={selectionMode}
-              selected={selectedIds.includes(item)}
+              selected={selectedItems.includes(item)}
               onSelect={toggleSelect}
               onPress={handleOpenAuthModal}
+              onLongPress={ () => {
+                setSelectionMode(true)
+                toggleSelect(item);
+                safeHaptic('success')
+
+              }}
             />
           )}
         />
       </ScreenSearchLayout>
-    );
-  }
 
-
-  return (
-    <>
-      {loading ? <AuthPaySkeleton /> : screenLayout()}
+      {/* FLOATING Bttn */}
       <Animated.View
         style={[
           {
             position: "absolute",
             bottom: 100,
-            marginHorizontal: "auto",
-                paddingHorizontal: 24,
-            width: "65%",
+            alignSelf: "center",
+            width: "55%",
           },
           floatingStyle,
         ]}
       >
         <TouchableOpacity
-          disabled={selectedIds.length === 0}
+          disabled={selectedItems.length === 0}
           onPress={handleAuthorize}
           className={`
-            py-4 rounded-3xl items-center px-4
+            py-4 rounded-3xl items-center
             ${
-              selectedIds.length === 0
+              selectedItems.length === 0
                 ? "bg-gray-300 dark:bg-gray-700"
                 : "bg-primary dark:bg-dark-primary"
             }
           `}
         >
-          <Text className="text-white font-bold text-xl shadow-lg">
-            Autorizar pagos{" "}
-            {selectedIds.length > 0 && `(${selectedIds.length})`}
+          <Text className="text-white font-bold text-xl">
+            Autorizar pagos ({selectedItems.length})
           </Text>
         </TouchableOpacity>
       </Animated.View>
 
+      {/* MODALS */}
       {filterModalVisible && (
         <FiltersModal
           visible={filterModalVisible}
@@ -309,18 +305,22 @@ export default function AuthorizationScreen() {
           onAuthorize={handleAuthorize}
         />
       )}
+
       {authSelectModalVisible && (
         <AuthSelectModal
           visible={authSelectModalVisible}
           items={
-            selectedIds.length > 0
-              ? selectedIds
+            selectedItems.length > 0
+              ? selectedItems
               : selectedItem
                 ? [selectedItem]
                 : []
           }
+          methods={methods}
           onClose={() => setAuthSelectModalVisible(false)}
-          onAuthorize={handleAuthorize}
+          onAuthorize={async () => {
+            handleAuthorize();
+          }}
         />
       )}
     </>

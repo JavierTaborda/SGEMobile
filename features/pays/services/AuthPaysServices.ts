@@ -1,5 +1,4 @@
-// modules/pays/services/AuthPaysServices.ts
-//import API from '@/lib/axios';
+import API from '@/lib/axios';
 import AuthPayData from '../data/AuthPayData.json';
 
 export const getPaysToAuthorize = async () => {
@@ -8,7 +7,9 @@ export const getPaysToAuthorize = async () => {
  return AuthPayData
 };
 
-// export const authorizePay = async (id: string) => {
-//   //const response = await API.post(`/pagos/${id}/autorizar`);
-//   return response.data;
-// };
+export const getMethodPays = async () => {
+  const response = await API.get('/pays/methods');
+  return response.data;
+
+};
+

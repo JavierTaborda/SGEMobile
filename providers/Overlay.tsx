@@ -3,11 +3,11 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";
 import { StatusBar, StyleSheet, Text, View } from "react-native";
 import Animated, {
-    Easing,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 export default function SuccessOverlay() {
@@ -74,7 +74,7 @@ export default function SuccessOverlay() {
         {/* BACKDROP */}
         <Animated.View
           style={[StyleSheet.absoluteFillObject, backdropStyle]}
-          className="bg-black/70"
+          className="bg-black/70 "
         />
 
         {/* GLOW */}
@@ -87,18 +87,18 @@ export default function SuccessOverlay() {
         <View  className="flex-1 justify-center items-center ">
           <Animated.View
             style={contentStyle}
-            className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-5 py-2 items-center gap-4 shadow-2xl"
+            className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-5 py-2 items-center gap-3 shadow-2xl w-[80%]"
           >
             <View className="w-16 h-16 rounded-full bg-green-500 items-center justify-center">
               <MaterialCommunityIcons name="check" size={36} color="white" />
             </View>
 
-            <Text className="text-lg font-bold text-foreground text-center">
+            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground text-center">
               {title}
             </Text>
 
             {subtitle && (
-              <Text className="text-sm text-muted-foreground text-center">
+              <Text className="text-sm text-muted-foreground dark:text-dark-mutedForeground text-center">
                 {subtitle}
               </Text>
             )}

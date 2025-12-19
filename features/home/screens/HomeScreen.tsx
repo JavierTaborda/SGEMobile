@@ -94,17 +94,18 @@ export default function HomeScreen() {
         </Text> */}
 
         <View className="flex-row flex-wrap justify-between pt-4">
-          <View className="w-[49%] mb-4">
+        <View className="w-[49%] mb-4">
             <ModuleButton
               //icon={emojis.approved}
               //icon={   emojis.package}
-              label="Aprobación Pedidos"
+              label="Autorización de Pagos"
               onPress={() =>
-                router.push("/(main)/(tabs)/(orders)/orderApproval")
+                router.push("/(main)/(tabs)/(pays)/authPays")
               }
               bgColor="bg-primary dark:bg-dark-primary"
             />
-          </View>
+          </View>  
+          {/* 
           <View className="w-[49%] mb-4">
             <ModuleButton
               //icon={emojis.list}
@@ -131,16 +132,8 @@ export default function HomeScreen() {
               onPress={() => router.push("/(main)/(tabs)/(returnReport)")}
               bgColor="bg-green-600 dark:bg-green-300"
             />
-          </View>
-          {/* <View className="w-[49%] mb-4">
-            <ModuleButton
-              //icon={emojis.bags}
-              icon={emojis.approved}
-              label="Crear Pedido"
-              bgColor="bg-gray-300 dark:bg-gray-700"
-              isComingSoon
-            />
           </View> */}
+    
         </View>
       </View>
     </ScrollView>

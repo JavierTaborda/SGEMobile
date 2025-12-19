@@ -1,10 +1,12 @@
 import { useRefreshControl } from '@/utils/userRefreshControl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getPaysToAuthorize } from '../services/AuthPaysServices';
+import { getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
 import { AuthPay } from '../types/AuthPay';
+import { MethodPay } from '../types/MethodPay';
 
 export function useAuthPays(searchText: string) {
   const [pays, setPays] = useState<AuthPay[]>([]);
+  const [methods, setMethods] = useState<MethodPay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,22 +42,45 @@ export function useAuthPays(searchText: string) {
   // Refresh
   const handleRefresh = useCallback(() => {
     wrapRefresh(
-      () => getPaysToAuthorize().then(setPays),
+      async () => {
+        const data = await getPaysToAuthorize();
+        setPays(data);
+      },
       () => setError("Ocurrió un error al cargar los datos...")
     );
   }, [wrapRefresh]);
 
-  // Initia
-  useEffect(() => {
-    getPaysToAuthorize()
-      .then(setPays)
-      .catch(() => setError("Error inicial"))
-      .finally(() => setLoading(false));
+  const loadData = useCallback(async () => {
+    try {
+      setError(null);
+
+      const [paysData, methodsData] = await Promise.all([
+        getPaysToAuthorize(),
+        getMethodPays(),
+      ]);
+
+
+
+      setPays(paysData);
+      setMethods(methodsData);
+    } catch (err) {
+
+      setError("Ocurrió un error al cargar los datos.");
+    } finally {
+
+      setLoading(false);
+
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return {
     pays,
     filteredPays,
+    methods,
     loading,
     totalAutorizadoUSD,
     totalAutorizadoVED,

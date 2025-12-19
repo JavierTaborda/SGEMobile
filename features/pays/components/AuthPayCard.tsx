@@ -21,6 +21,7 @@ interface Props {
   selectionMode?: boolean;
   onSelect?: (auth: AuthPay) => void;
   onPress?: (item: AuthPay) => void;
+  onLongPress?: () => void;
 }
 
 export default function AuthPayCard({
@@ -29,6 +30,7 @@ export default function AuthPayCard({
   selectionMode = false,
   onSelect,
   onPress,
+  onLongPress,
 }: Props) {
   const isAuth = item.autorizadopagar === "1";
   const currencyBs = item.monedaautorizada === "VED";
@@ -76,11 +78,12 @@ export default function AuthPayCard({
     <Animated.View style={cardStyle}>
       <Pressable
         onPress={handlePress}
+        onLongPress={onLongPress}
         className={`
           mb-4 rounded-2xl 
           ${
             selected
-              ? "border border-primary bg-primary/5 dark:bg-dark-primary/10"
+              ? "border border-primary dark:border-dark-primary bg-primary/5 dark:bg-dark-primary/10"
               : "bg-componentbg dark:bg-dark-componentbg"
           }
           
@@ -99,7 +102,7 @@ export default function AuthPayCard({
                   w-6 h-6 rounded-full border items-center justify-center
                   ${
                     selected
-                      ? "bg-primary border-primary"
+                      ? "bg-primary dark:bg-dark-primary border-primary dark:border-dark-primary"
                       : "border-gray-400 dark:border-gray-500"
                   }
                 `}
@@ -217,13 +220,13 @@ export default function AuthPayCard({
                     </Text>
                     <View className="flex-row gap-x-1 items-baseline">
                       <Text
-                        className={`text-2xl font-black ${currencyBs ? `text-primary dark:text-green-400` : `text-green-500 dark:text-green-300`}`}
+                        className={`text-2xl font-black ${currencyBs ? `text-primary dark:text-dark-primary` : `text-green-600 dark:text-green-400`}`}
                       >
                         {currencyBs ? currencyVES : currencyDollar}
                       </Text>
 
                       <Text
-                        className={`text-xl font-bold ${currencyBs ? `text-primary dark:text-green-400` : `text-green-500 dark:text-green-300`} `}
+                        className={`text-xl font-bold ${currencyBs ? `text-primary dark:text-dark-primary` : `text-green-600 dark:text-green-400`} `}
                       >
                         {totalVenezuela(item.montoautorizado)}{" "}
                         {item.monedaautorizada}
