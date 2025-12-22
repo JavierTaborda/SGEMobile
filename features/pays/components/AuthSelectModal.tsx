@@ -41,7 +41,7 @@ export default function AuthPayModal({
 
   const showSuccess = useSuccessOverlayStore((s) => s.show);
 
-  /* ===================== RESET ===================== */
+  /*  RESET  */
   useEffect(() => {
     if (!visible) return;
 
@@ -58,7 +58,7 @@ export default function AuthPayModal({
     setIsLoading(false);
   }, [visible, items]);
 
-  /* ===================== DERIVED STATE ===================== */
+  /*  DERIVED STATE  */
   const derived = useMemo(() => {
     let hasUSD = false;
     let hasVED = false;
@@ -94,7 +94,7 @@ export default function AuthPayModal({
 
   const isValid = !!formaPago && (!requiresRate || (tasa > 0 && !isNaN(tasa)));
 
-  /* ===================== TOTALS ===================== */
+  /*  TOTALS  */
   const totals = useMemo(() => {
     if (tasa <= 0) return { ved: 0, usd: 0, totalFinal: 0 };
 
@@ -120,7 +120,7 @@ export default function AuthPayModal({
     };
   }, [items, tasa, targetCurrency]);
 
-  /* ===================== HANDLERS ===================== */
+  /*  HANDLERS  */
   const toggleExpanded = useCallback(() => {
     setExpanded((v) => !v);
   }, []);
@@ -146,10 +146,10 @@ export default function AuthPayModal({
     }
   }, [isValid, onAuthorize, items.length, onClose, showSuccess]);
 
-  /* ===================== GUARD ===================== */
+
   if (!visible || items.length === 0) return null;
 
-  /* ===================== RENDER ===================== */
+  /* RENDER */
   return (
     <BottomModal
       visible={visible}
@@ -159,16 +159,18 @@ export default function AuthPayModal({
       <ScrollView keyboardShouldPersistTaps="handled">
         {/* HEADER */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
-          <Text className="text-lg font-bold">Autorización de pagos</Text>
+          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+            Autorización de pagos
+          </Text>
 
           <View className="flex-row justify-between mt-1">
-            <Text className="text-sm text-muted-foreground">
+            <Text className="text-sm text-muted-foreground dark:text-dark-mutedForeground">
               {items.length} documentos seleccionados
             </Text>
 
             {targetCurrency && (
               <View className="px-3 py-1 rounded-full bg-primary/10">
-                <Text className="text-xs font-bold text-primary">
+                <Text className="text-xs font-bold text-primary dark:text-dark-primary">
                   Pago en {targetCurrency}
                 </Text>
               </View>
@@ -179,15 +181,17 @@ export default function AuthPayModal({
         {/* TOTAL */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-3">
           <View className="flex-row justify-between">
-            <Text className="text-lg font-bold">Monto a autorizar</Text>
-            <Text className="text-xl font-bold text-primary">
+            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+              Monto a autorizar
+            </Text>
+            <Text className="text-xl font-extrabold text-primary dark:text-dark-primary">
               {totalVenezuela(totals.totalFinal)} {targetCurrency ?? "—"}
             </Text>
           </View>
 
           {requiresRate && (
-            <View className="mt-2 px-3 py-1 rounded-lg bg-error/10">
-              <Text className="text-xs text-error font-semibold">
+            <View className="mt-2 px-3 py-1 rounded-lg bg-error/10 dark:bg-dark-error/10">
+              <Text className="text-xs text-error dark:text-dark-error font-semibold">
                 Tasa obligatoria para este pago
               </Text>
             </View>
@@ -214,23 +218,23 @@ export default function AuthPayModal({
           {requiresRate ? (
             <>
               <RateInput value={tasa} onChangeValue={setTasa} />
-              <Text className="text-xs text-error">
+              <Text className="text-xs text-error dark:text-dark-error">
                 Tasa obligatoria para conversión
               </Text>
             </>
           ) : (
-            <View className="px-3 py-2 rounded-xl bg-muted/30">
-              <Text className="text-xs text-muted-foreground">
+            <View className="px-3 py-2 rounded-xl bg-muted/30 dark:bg-dark-muted/70">
+              <Text className="text-xs text-muted-foreground dark:text-dark-mutedForeground">
                 No se requiere tasa
               </Text>
             </View>
           )}
         </View>
 
-        {/* DETALLE */}
+        {/* Details */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4">
           <TouchableOpacity onPress={toggleExpanded}>
-            <Text className="text-primary font-bold">
+            <Text className="text-primary dark:text-dark-primary font-bold">
               {expanded ? "Ocultar detalle" : `Ver detalle (${items.length})`}
             </Text>
           </TouchableOpacity>
@@ -253,15 +257,19 @@ export default function AuthPayModal({
                     : Number(item.montosaldo) / tasa;
 
                 return (
-                  <View className="py-2 border-b border-muted">
-                    <Text className="font-semibold">{item.beneficiario}</Text>
-                    <Text className="text-xs">{item.observacion}</Text>
+                  <View className="py-2 border-b border-muted dark:border-dark-background">
+                    <Text className="font-semibold text-foreground dark:text-dark-foreground">
+                      {item.beneficiario}
+                    </Text>
+                    <Text className="text-xs text-foreground dark:text-dark-foreground">
+                      {item.observacion}
+                    </Text>
 
                     <View className="flex-row justify-end mt-1">
-                      <Text className="text-xs text-primary">
+                      <Text className="text-xs text-primary dark:text-dark-primary">
                         {totalVenezuela(ved)} {currencyVES}
                       </Text>
-                      <Text className="text-xs ml-2">
+                      <Text className="text-xs text-foreground dark:text-dark-foreground ml-2">
                         / {totalVenezuela(usd)} {currencyDollar}
                       </Text>
                     </View>
@@ -277,7 +285,7 @@ export default function AuthPayModal({
       <View className="pb-2 gap-2">
         <TouchableOpacity
           className={`rounded-xl py-3 ${
-            isValid ? "bg-primary" : "bg-gray-400"
+            isValid ? "bg-primary dark:bg-dark-primary " : "bg-gray-400"
           }`}
           disabled={isLoading}
           onPress={handleAuthorize}
@@ -289,17 +297,17 @@ export default function AuthPayModal({
 
         {isAuth && (
           <TouchableOpacity
-            className="rounded-xl py-3 border border-primary"
+            className="rounded-xl py-3 border border-primary dark:border-dark-primary"
             onPress={onClose}
           >
-            <Text className="text-primary text-center font-bold">
+            <Text className="text-primary dark:text-dark-primary text-center font-bold">
               Desautorizar
             </Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
-          className="rounded-xl py-3 bg-error"
+          className="rounded-xl py-3 bg-error dark:bg-dark-error"
           onPress={onClose}
         >
           <Text className="text-white text-center font-bold">Cancelar</Text>

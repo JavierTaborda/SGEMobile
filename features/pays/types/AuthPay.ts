@@ -23,10 +23,5 @@ export interface AuthPay {
   empresapagadora: string;
   bancopagador: string;
 
-  // cuentabanco?: string;
-  // banco?: string;
-  // rifproveedor?: string;
-  // tipoproveedor?: string;
-  // monedaproveedor?: string;
-  // numerofactura?: string;
+
 }
