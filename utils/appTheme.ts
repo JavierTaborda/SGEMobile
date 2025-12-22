@@ -6,7 +6,7 @@ export const appTheme = {
     pale: "rgb(135, 255, 135)",
   },
   secondary: {
-    DEFAULT: "rgb(64, 145, 108)",
+    DEFAULT: "#3FD6D4",//"rgb(34, 197, 94)",
     light: "rgb(116, 198, 157)",
   },
   tertiary: {

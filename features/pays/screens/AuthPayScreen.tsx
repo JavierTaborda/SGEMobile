@@ -17,16 +17,13 @@ import { safeHaptic } from "@/utils/safeHaptics";
 
 import ErrorView from "@/components/ui/ErrorView";
 import AuthPayCard from "../components/AuthPayCard";
-import AuthPayModal from "../components/AuthPayModal";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
 import AuthSelectModal from "../components/AuthSelectModal";
 import FiltersModal from "../components/PayFilterModal";
 import { AuthPay } from "../types/AuthPay";
 
 export default function AuthorizationScreen() {
-  /* ================================
-     STATE
-  ================================= */
+  /* FILTERS / SEARCH*/
   const [searchText, setSearchText] = useState("");
   const [company, setCompany] = useState("CYBERLUX");
   const [authorized, setAuthorized] = useState(false);
@@ -34,6 +31,7 @@ export default function AuthorizationScreen() {
 
   const { isDark } = useThemeStore();
 
+  /* DATA*/
   const {
     filteredPays,
     loading,
@@ -48,19 +46,45 @@ export default function AuthorizationScreen() {
     error,
   } = useAuthPays(searchText);
 
-  // MODALS
+  /*MODALS*/
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authSelectModalVisible, setAuthSelectModalVisible] = useState(false);
 
-  //Selects
 
   const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<AuthPay[]>([]);
-  const [selectedItem, setSelectedItem] = useState<AuthPay | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  //     HEADER ANIMATION
+  const toggleSelect = useCallback((item: AuthPay) => {
+    safeHaptic("selection");
+    setSelectionMode(true);
 
+    const id = String(item.numerodocumento);
+
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    safeHaptic("selection");
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const enterSelectionMode = useCallback(() => {
+    safeHaptic("selection");
+    setSelectionMode(true);
+  }, []);
+
+  const selectedItems = useMemo(
+    () =>
+      filteredPays.filter((i) => selectedIds.has(String(i.numerodocumento))),
+    [filteredPays, selectedIds]
+  );
+
+  /* HEADER ANIMATION */
   const headerScale = useSharedValue(1);
 
   useEffect(() => {
@@ -73,7 +97,7 @@ export default function AuthorizationScreen() {
     transform: [{ scale: headerScale.value }],
   }));
 
-  //  FLOATING Btton
+  /*FLOATING CTA*/
   const { height } = Dimensions.get("window");
   const ctaTranslateY = useSharedValue(height);
   const ctaOpacity = useSharedValue(0);
@@ -93,43 +117,39 @@ export default function AuthorizationScreen() {
     opacity: ctaOpacity.value,
   }));
 
-  //  HANDLERS
+  /* HEADER TEXT */
+  const headerTitle = useMemo(() => {
+    if (!selectionMode) return `${totalDocumentsAuth} documentos`;
+    return `${selectedIds.size}/${totalDocumentsAuth} documentos`;
+  }, [selectionMode, selectedIds.size, totalDocumentsAuth]);
 
-  const toggleSelect = useCallback((item: AuthPay) => {
-    safeHaptic("selection");
-    setSelectionMode(true);
-    setSelectedItems((prev) =>
-      prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
-    );
-  }, []);
-
-  const handleOpenAuthModal = useCallback(
-    (item: AuthPay) => {
-      if (selectionMode) return;
-      setSelectedItem(item);
-      setAuthModalVisible(true);
-    },
-    [selectionMode]
-  );
-
+  /*HANDLERS */
+  
   const handleAuthorize = useCallback(() => {
     setAuthSelectModalVisible(true);
   }, []);
 
-  const exitSelectionMode = useCallback(() => {
-    safeHaptic("selection");
-    setSelectionMode(false);
-    setSelectedItems([]);
-  }, []);
 
-  //     HEADER TEXT
+  const renderItem = useCallback(
+    ({ item }: { item: AuthPay }) => {
+      const id = String(item.numerodocumento);
 
-  const headerTitle = useMemo(() => {
-    if (!selectionMode) return `${totalDocumentsAuth} documentos`;
-    return `${selectedItems.length}/${totalDocumentsAuth} documentos`;
-  }, [selectionMode, selectedItems.length, totalDocumentsAuth]);
-
-  //     RENDER
+      return (
+        <AuthPayCard
+          item={item}
+          selectionMode={selectionMode}
+          selected={selectedIds.has(id)}
+          onSelect={toggleSelect}
+          onLongPress={() => {
+            safeHaptic("success");
+            setSelectionMode(true);
+            toggleSelect(item);
+          }}
+        />
+      );
+    },
+    [selectionMode, selectedIds, toggleSelect]
+  );
 
   if (loading) return <AuthPaySkeleton />;
   if (error) return <ErrorView error={error} getData={handleRefresh} />;
@@ -172,9 +192,7 @@ export default function AuthorizationScreen() {
             </View>
 
             <View>
-              <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
-                {headerTitle}
-              </Text>
+              <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">{headerTitle}</Text>
               <Text className="text-xs text-gray-500 dark:text-gray-400">
                 {selectionMode
                   ? "Selecciona documentos a autorizar"
@@ -184,9 +202,7 @@ export default function AuthorizationScreen() {
           </View>
 
           <TouchableOpacity
-            onPress={
-              selectionMode ? exitSelectionMode : () => setSelectionMode(true)
-            }
+            onPress={selectionMode ? exitSelectionMode : enterSelectionMode}
             className={`
               px-3 py-2 rounded-xl flex-row items-center gap-2
               ${
@@ -222,7 +238,7 @@ export default function AuthorizationScreen() {
         {/* LIST */}
         <CustomFlatList
           data={filteredPays}
-          keyExtractor={(item, index) => `${item.numerodocumento}-${index}`}
+          keyExtractor={(item) => String(item.numerodocumento)}
           refreshing={refreshing}
           canRefresh={canRefresh}
           handleRefresh={handleRefresh}
@@ -232,25 +248,11 @@ export default function AuthorizationScreen() {
           subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
             totalAutorizadoUSD
           )} $`}
-          renderItem={({ item }) => (
-            <AuthPayCard
-              item={item}
-              selectionMode={selectionMode}
-              selected={selectedItems.includes(item)}
-              onSelect={toggleSelect}
-              onPress={handleOpenAuthModal}
-              onLongPress={ () => {
-                setSelectionMode(true)
-                toggleSelect(item);
-                safeHaptic('success')
-
-              }}
-            />
-          )}
+          renderItem={renderItem}
         />
       </ScreenSearchLayout>
 
-      {/* FLOATING Bttn */}
+      {/* FLOATING CTA */}
       <Animated.View
         style={[
           {
@@ -263,19 +265,19 @@ export default function AuthorizationScreen() {
         ]}
       >
         <TouchableOpacity
-          disabled={selectedItems.length === 0}
+          disabled={selectedIds.size === 0}
           onPress={handleAuthorize}
           className={`
             py-4 rounded-3xl items-center
             ${
-              selectedItems.length === 0
+              selectedIds.size === 0
                 ? "bg-gray-300 dark:bg-gray-700"
                 : "bg-primary dark:bg-dark-primary"
             }
           `}
         >
           <Text className="text-white font-bold text-xl">
-            Autorizar pagos ({selectedItems.length})
+            Autorizar pagos ({selectedIds.size})
           </Text>
         </TouchableOpacity>
       </Animated.View>
@@ -297,29 +299,15 @@ export default function AuthorizationScreen() {
         />
       )}
 
-      {authModalVisible && selectedItem && (
-        <AuthPayModal
-          visible={authModalVisible}
-          item={selectedItem}
-          onClose={() => setAuthModalVisible(false)}
-          onAuthorize={handleAuthorize}
-        />
-      )}
-
       {authSelectModalVisible && (
         <AuthSelectModal
           visible={authSelectModalVisible}
-          items={
-            selectedItems.length > 0
-              ? selectedItems
-              : selectedItem
-                ? [selectedItem]
-                : []
-          }
+          items={selectedItems}
           methods={methods}
           onClose={() => setAuthSelectModalVisible(false)}
           onAuthorize={async () => {
-            handleAuthorize();
+            setAuthSelectModalVisible(false);
+            exitSelectionMode();
           }}
         />
       )}

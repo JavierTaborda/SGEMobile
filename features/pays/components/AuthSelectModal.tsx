@@ -7,8 +7,14 @@ import {
   currencyVES,
   totalVenezuela,
 } from "@/utils/moneyFormat";
-import { useEffect, useMemo, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FlatList,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AuthPay } from "../types/AuthPay";
 import { MethodPay } from "../types/MethodPay";
 
@@ -17,7 +23,7 @@ interface Props {
   onClose: () => void;
   items: AuthPay[];
   methods: MethodPay[];
-  onAuthorize: () => void;
+  onAuthorize: () => Promise<void>;
 }
 
 export default function AuthPayModal({
@@ -35,56 +41,91 @@ export default function AuthPayModal({
 
   const showSuccess = useSuccessOverlayStore((s) => s.show);
 
+  /* ===================== RESET ===================== */
   useEffect(() => {
-    if (visible) {
-      setFormaPago("");
-      setTasa(1);
-      setExpanded(false);
-      setShowErrors(false);
-      setIsLoading(false);
+    if (!visible) return;
+
+    const found = items.find(
+      (f) => f.tasacambio !== undefined && f.tasacambio !== null
+    );
+
+    const parsed = found ? Number(found.tasacambio) : 1;
+
+    setFormaPago("");
+    setTasa(!isNaN(parsed) && isFinite(parsed) ? parsed : 1);
+    setExpanded(false);
+    setShowErrors(false);
+    setIsLoading(false);
+  }, [visible, items]);
+
+  /* ===================== DERIVED STATE ===================== */
+  const derived = useMemo(() => {
+    let hasUSD = false;
+    let hasVED = false;
+    let isAuth = false;
+    let fallbackCurrency: string | undefined;
+
+    for (const i of items) {
+      if (i.moneda === "USD") hasUSD = true;
+      if (i.moneda === "VED") hasVED = true;
+      if (i.autorizadopagar === "1") isAuth = true;
+      if (!fallbackCurrency && i.moneda) fallbackCurrency = i.moneda;
     }
-  }, [visible]);
 
-  const currentMethod = methods.find(
-    (m) => String(m.codigounico) === formaPago
-  );
+    const currentMethod = methods.find(
+      (m) => String(m.codigounico) === formaPago
+    );
 
-  const targetCurrency = currentMethod?.monedapago;
+    const targetCurrency = currentMethod?.monedapago ?? fallbackCurrency;
 
-  const hasUSD = items.some((i) => i.moneda === "USD");
-  const hasVED = items.some((i) => i.moneda === "VED");
+    const requiresRate = !(
+      (targetCurrency === "USD" && hasUSD && !hasVED) ||
+      (targetCurrency === "VED" && hasVED && !hasUSD)
+    );
 
-  // 🔴 REGLA FINAL
-  const requiresRate = !(
-    (targetCurrency === "USD" && hasUSD && !hasVED) ||
-    (targetCurrency === "VED" && hasVED && !hasUSD)
-  );
+    return {
+      targetCurrency,
+      requiresRate,
+      isAuth,
+    };
+  }, [items, methods, formaPago]);
+
+  const { targetCurrency, requiresRate, isAuth } = derived;
 
   const isValid = !!formaPago && (!requiresRate || (tasa > 0 && !isNaN(tasa)));
 
-  // ===== TOTALES =====
+  /* ===================== TOTALS ===================== */
   const totals = useMemo(() => {
+    if (tasa <= 0) return { ved: 0, usd: 0, totalFinal: 0 };
+
     let ved = 0;
     let usd = 0;
 
-    items.forEach((i) => {
+    for (const i of items) {
       const monto = Number(i.montosaldo);
 
       if (i.moneda === "VED") {
         ved += monto;
-        usd += tasa > 0 ? monto / tasa : 0;
+        usd += monto / tasa;
       } else {
         usd += monto;
-        ved += tasa > 0 ? monto * tasa : 0;
+        ved += monto * tasa;
       }
-    });
+    }
 
-    const totalFinal = targetCurrency === "USD" ? usd : ved;
-
-    return { ved, usd, totalFinal };
+    return {
+      ved,
+      usd,
+      totalFinal: targetCurrency === "USD" ? usd : ved,
+    };
   }, [items, tasa, targetCurrency]);
 
-  const handleAuthorize = async () => {
+  /* ===================== HANDLERS ===================== */
+  const toggleExpanded = useCallback(() => {
+    setExpanded((v) => !v);
+  }, []);
+
+  const handleAuthorize = useCallback(async () => {
     if (!isValid) {
       setShowErrors(true);
       return;
@@ -103,22 +144,22 @@ export default function AuthPayModal({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isValid, onAuthorize, items.length, onClose, showSuccess]);
 
+  /* ===================== GUARD ===================== */
   if (!visible || items.length === 0) return null;
 
+  /* ===================== RENDER ===================== */
   return (
     <BottomModal
       visible={visible}
       onClose={isLoading ? () => {} : onClose}
       heightPercentage={0.85}
     >
-      <ScrollView className="flex-1 px-3" keyboardShouldPersistTaps="handled">
-        {/* ===== HEADER ===== */}
+      <ScrollView keyboardShouldPersistTaps="handled">
+        {/* HEADER */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
-          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
-            Autorización de pagos
-          </Text>
+          <Text className="text-lg font-bold">Autorización de pagos</Text>
 
           <View className="flex-row justify-between mt-1">
             <Text className="text-sm text-muted-foreground">
@@ -135,25 +176,11 @@ export default function AuthPayModal({
           </View>
         </View>
 
-        {/* ===== RESUMEN ===== */}
-        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-3 gap-2">
+        {/* TOTAL */}
+        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-3">
           <View className="flex-row justify-between">
-            <Text>Total VED</Text>
-            <Text>
-              {totalVenezuela(totals.ved)} {currencyVES}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between">
-            <Text>Total USD</Text>
-            <Text>
-              {totalVenezuela(totals.usd)} {currencyDollar}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between border-t pt-3 mt-2">
-            <Text className="text-xl font-bold">Total a pagar</Text>
-            <Text className="text-2xl font-bold text-primary">
+            <Text className="text-lg font-bold">Monto a autorizar</Text>
+            <Text className="text-xl font-bold text-primary">
               {totalVenezuela(totals.totalFinal)} {targetCurrency ?? "—"}
             </Text>
           </View>
@@ -161,13 +188,13 @@ export default function AuthPayModal({
           {requiresRate && (
             <View className="mt-2 px-3 py-1 rounded-lg bg-error/10">
               <Text className="text-xs text-error font-semibold">
-                ⚠️ Tasa obligatoria para este pago
+                Tasa obligatoria para este pago
               </Text>
             </View>
           )}
         </View>
 
-        {/* ===== MÉTODO Y TASA ===== */}
+        {/* MÉTODO + TASA */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4 gap-3">
           <CustomPicker
             selectedValue={formaPago}
@@ -200,47 +227,54 @@ export default function AuthPayModal({
           )}
         </View>
 
-        {/* ===== DETALLE ===== */}
+        {/* DETALLE */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4">
-          <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+          <TouchableOpacity onPress={toggleExpanded}>
             <Text className="text-primary font-bold">
               {expanded ? "Ocultar detalle" : `Ver detalle (${items.length})`}
             </Text>
           </TouchableOpacity>
 
-          {expanded &&
-            items.map((i, idx) => {
-              const ved =
-                i.moneda === "VED"
-                  ? Number(i.montosaldo)
-                  : Number(i.montosaldo) * tasa;
+          {expanded && (
+            <FlatList
+              data={items}
+              keyExtractor={(item) => String(item.numerodocumento)}
+              scrollEnabled={false}
+              removeClippedSubviews
+              renderItem={({ item }) => {
+                const ved =
+                  item.moneda === "VED"
+                    ? Number(item.montosaldo)
+                    : Number(item.montosaldo) * tasa;
 
-              const usd =
-                i.moneda === "USD"
-                  ? Number(i.montosaldo)
-                  : Number(i.montosaldo) / tasa;
+                const usd =
+                  item.moneda === "USD"
+                    ? Number(item.montosaldo)
+                    : Number(item.montosaldo) / tasa;
 
-              return (
-                <View key={idx} className="py-2 border-b border-muted">
-                  <Text className="font-semibold">{i.beneficiario}</Text>
-                  <Text className="text-xs">{i.observacion}</Text>
+                return (
+                  <View className="py-2 border-b border-muted">
+                    <Text className="font-semibold">{item.beneficiario}</Text>
+                    <Text className="text-xs">{item.observacion}</Text>
 
-                  <View className="flex-row justify-end mt-1">
-                    <Text className="text-xs text-primary">
-                      {totalVenezuela(ved)} {currencyVES}
-                    </Text>
-                    <Text className="text-xs ml-2">
-                      / {totalVenezuela(usd)} {currencyDollar}
-                    </Text>
+                    <View className="flex-row justify-end mt-1">
+                      <Text className="text-xs text-primary">
+                        {totalVenezuela(ved)} {currencyVES}
+                      </Text>
+                      <Text className="text-xs ml-2">
+                        / {totalVenezuela(usd)} {currencyDollar}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              );
-            })}
+                );
+              }}
+            />
+          )}
         </View>
       </ScrollView>
 
-      {/* ===== ACCIONES ===== */}
-      <View className="px-4 pb-4 gap-2">
+      {/* FOOTER */}
+      <View className="pb-2 gap-2">
         <TouchableOpacity
           className={`rounded-xl py-3 ${
             isValid ? "bg-primary" : "bg-gray-400"
@@ -252,6 +286,17 @@ export default function AuthPayModal({
             {isLoading ? "Procesando..." : `Autorizar (${items.length})`}
           </Text>
         </TouchableOpacity>
+
+        {isAuth && (
+          <TouchableOpacity
+            className="rounded-xl py-3 border border-primary"
+            onPress={onClose}
+          >
+            <Text className="text-primary text-center font-bold">
+              Desautorizar
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           className="rounded-xl py-3 bg-error"
