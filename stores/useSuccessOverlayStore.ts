@@ -1,22 +1,35 @@
-import { create } from 'zustand';
+import { OverlayType } from "@/types/overlayType";
+import { create } from "zustand";
 
-interface SuccessOverlayState {
+
+interface OverlayState {
     visible: boolean;
+    type: OverlayType;
     title?: string;
     subtitle?: string;
-    show: (data?: { title?: string; subtitle?: string }) => void;
+    show: (type: OverlayType, data?: { title?: string; subtitle?: string }) => void;
     hide: () => void;
 }
 
-export const useSuccessOverlayStore = create<SuccessOverlayState>((set) => ({
+export const useOverlayStore = create<OverlayState>((set) => ({
     visible: false,
-    title: 'Operación exitosa',
+    type: "success",
+    title: "Operación exitosa",
     subtitle: undefined,
 
-    show: (data) =>
+    show: (type, data) =>
         set({
             visible: true,
-            title: data?.title ?? 'Operación exitosa',
+            type,
+            title:
+                data?.title ??
+                (type === "success"
+                    ? "Operación exitosa"
+                    : type === "error"
+                        ? "Ocurrió un error"
+                        : type === "warning"
+                            ? "Atención"
+                            : "Información"),
             subtitle: data?.subtitle,
         }),
 

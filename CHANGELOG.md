@@ -37,6 +37,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Conditional switch in OrderSearchScreen.
   - Advanced filters in GoalsFilter.
   - Animated modals (`AnimatedView`).
+  - Unified `Overlay` component supporting `success`, `error`, `warning`, and `info`.
+  - Dynamic animations and icons based on overlay type.
+
+  Usage:
+
+      ```ts
+      const overlay = useOverlayStore();
+
+      //Success
+      overlay.show("success", { title: "Guardado correctamente", subtitle: "Tus cambios se aplicaron" });
+
+      // Error
+      overlay.show("error", { title: "Error al guardar", subtitle: "Revisa tu conexión" });
+
+      // Warning
+      overlay.show("warning", { title: "Campos incompletos", subtitle: "Debes llenar todos los campos" });
+
+      // Info
+      overlay.show("info", { title: "Versión instalada", subtitle: "App actualizada a v1.2" });
+      ```
 
 ### Changed
 
@@ -60,3 +80,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Unnecessary UI elements (emojis and icons in Home and Drawer).
 - Duplicate dependencies replaced by internal utilities.
+
+```

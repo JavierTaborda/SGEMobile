@@ -1,7 +1,7 @@
 import CustomPicker from "@/components/inputs/CustomPicker";
 import RateInput from "@/components/inputs/RateInput";
 import BottomModal from "@/components/ui/BottomModal";
-import { useSuccessOverlayStore } from "@/stores/useSuccessOverlayStore";
+import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import {
   currencyDollar,
   currencyVES,
@@ -39,7 +39,7 @@ export default function AuthPayModal({
   const [isLoading, setIsLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
-  const showSuccess = useSuccessOverlayStore((s) => s.show);
+  const overlay = useOverlayStore();
 
   /*  RESET  */
   useEffect(() => {
@@ -133,19 +133,24 @@ export default function AuthPayModal({
 
     try {
       setIsLoading(true);
+
       await onAuthorize();
 
-      showSuccess({
+      overlay.show("success", {
         title: "Pagos autorizados",
         subtitle: `${items.length} documentos procesados`,
       });
 
       onClose();
+    } catch (error) {
+      overlay.show("error", {
+        title: "Error al guardar",
+        subtitle: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [isValid, onAuthorize, items.length, onClose, showSuccess]);
-
+  }, [isValid, onAuthorize, items.length, onClose, overlay]);
 
   if (!visible || items.length === 0) return null;
 

@@ -1,4 +1,4 @@
-import { useSuccessOverlayStore } from "@/stores/useSuccessOverlayStore";
+import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import { safeHaptic } from "@/utils/safeHaptics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect } from "react";
@@ -16,65 +16,38 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 
-export default function SuccessOverlay() {
-  const { visible, title, subtitle, hide } = useSuccessOverlayStore();
+export default function Overlay() {
+  const { visible, type, title, subtitle, hide } = useOverlayStore();
   const { width, height } = Dimensions.get("window");
 
-  // ---------- Shared values ----------
-  const backdropOpacity = useSharedValue(0);
-  const contentScale = useSharedValue(0.85);
-  const contentOpacity = useSharedValue(0);
-  const glowOpacity = useSharedValue(0);
-  const checkScale = useSharedValue(0);
+  const progress = useSharedValue(0);
 
-  // ---------- Animaciones ----------
   useEffect(() => {
     if (visible) {
-      safeHaptic("success");
-      backdropOpacity.value = withTiming(1, {
-        duration: 400,
+      safeHaptic(type === "success" ? "success" : "error");
+      progress.value = withTiming(1, {
+        duration: 500,
         easing: Easing.out(Easing.ease),
       });
-      contentOpacity.value = withTiming(1, { duration: 300 });
-      contentScale.value = withSpring(1, { damping: 20, stiffness: 100 });
-      glowOpacity.value = withTiming(1, { duration: 600 });
-      checkScale.value = withSpring(1.05, { damping: 15, stiffness: 120 });
     } else {
-      backdropOpacity.value = withTiming(0, { duration: 300 });
-      contentOpacity.value = withTiming(0, { duration: 200 });
-      contentScale.value = withTiming(0.95, { duration: 200 });
-      glowOpacity.value = withTiming(0, { duration: 300 });
-      checkScale.value = withTiming(0, { duration: 200 });
+      progress.value = withTiming(0, { duration: 300 });
     }
-  }, [visible]);
+  }, [visible, type]);
 
-  // ---------- Animated styles ----------
   const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
+    opacity: interpolate(progress.value, [0, 1], [0, 1]),
   }));
 
   const contentStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-    transform: [{ scale: contentScale.value }],
+    opacity: interpolate(progress.value, [0, 1], [0, 1]),
+    transform: [{ scale: interpolate(progress.value, [0, 1], [0.85, 1]) }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [
-      {
-        scale: interpolate(glowOpacity.value, [0, 1], [0.9, 1.3]),
-      },
-    ],
-  }));
+  //autohide
 
-  const checkStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: checkScale.value }],
-  }));
-  // // ---------- Auto-hide ----------
   useEffect(() => {
     if (visible) {
       const t = setTimeout(hide, 1500);
@@ -83,6 +56,34 @@ export default function SuccessOverlay() {
   }, [visible]);
 
   if (!visible) return null;
+
+  // config per type
+  const configs = {
+    success: {
+      color: "bg-green-600 dark:bg-green-400",
+      icon: "check",
+      confetti: true,
+    },
+    error: {
+      color: "bg-error dark:bg-dark-error",
+      icon: "close",
+      confetti: false,
+    },
+    warning: {
+      color: " bg-yellow-500 dark:bg-yellow-400",
+      icon: "alert",
+      confetti: false,
+    },
+    info: {
+      color: "bg-info dark:bg-dark-info",
+      icon: "information",
+      confetti: false,
+    },
+  } as const;
+
+  type OverlayType = keyof typeof configs; // "success" | "error" | "warning" | "info"
+
+  const config = configs[type as OverlayType];
 
   return (
     <>
@@ -95,14 +96,6 @@ export default function SuccessOverlay() {
           className="bg-black/70"
         />
 
-        {/* GLOW */}
-        <Animated.View
-          className="absolute w-full h-full bg-primary/30 dark:bg-dark-primary/30"
-          style={glowStyle}
-        />
-
-        {/* CONFETTI */}
-
         {/* CONTENT */}
         <View className="flex-1 justify-center items-center">
           <Pressable onPress={hide}>
@@ -114,10 +107,13 @@ export default function SuccessOverlay() {
               className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-6 py-6 items-center gap-4 shadow-2xl justify-center"
             >
               <Animated.View
-                className="bg-green-600 dark:bg-green-400 shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center"
-                style={checkStyle}
+                className={` ${config.color} shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center`}
               >
-                <MaterialCommunityIcons name="check" size={48} color="white" />
+                <MaterialCommunityIcons
+                  name={config.icon}
+                  size={48}
+                  color="white"
+                />
               </Animated.View>
 
               <Text className="text-2xl font-bold text-foreground dark:text-dark-foreground text-center">
@@ -130,7 +126,9 @@ export default function SuccessOverlay() {
               )}
             </Animated.View>
           </Pressable>
-          {visible && (
+
+          {/* CONFETTI  only in success */}
+          {config.confetti && (
             <ConfettiCannon
               count={60}
               origin={{ x: width / 2, y: height / 2 }}
