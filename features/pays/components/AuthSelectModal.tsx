@@ -3,9 +3,7 @@ import RateInput from "@/components/inputs/RateInput";
 import BottomModal from "@/components/ui/BottomModal";
 import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import {
-  currencyDollar,
-  currencyVES,
-  totalVenezuela,
+  totalVenezuela
 } from "@/utils/moneyFormat";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -194,16 +192,10 @@ export default function AuthPayModal({
             </Text>
           </View>
 
-          {requiresRate && (
-            <View className="mt-2 px-3 py-1 rounded-lg bg-error/10 dark:bg-dark-error/10">
-              <Text className="text-xs text-error dark:text-dark-error font-semibold">
-                Tasa obligatoria para este pago
-              </Text>
-            </View>
-          )}
+         
         </View>
 
-        {/* MÉTODO + TASA */}
+        {/* METHOD + TASA */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4 gap-3">
           <CustomPicker
             selectedValue={formaPago}
@@ -223,14 +215,14 @@ export default function AuthPayModal({
           {requiresRate ? (
             <>
               <RateInput value={tasa} onChangeValue={setTasa} />
-              <Text className="text-xs text-error dark:text-dark-error">
+              <Text className="text-xs font-semibold text-mutedForeground dark:text-dark-mutedForeground">
                 Tasa obligatoria para conversión
               </Text>
             </>
           ) : (
             <View className="px-3 py-2 rounded-xl bg-muted/30 dark:bg-dark-muted/70">
               <Text className="text-xs text-muted-foreground dark:text-dark-mutedForeground">
-                No se requiere tasa
+                No requiere tasa
               </Text>
             </View>
           )}
@@ -251,15 +243,7 @@ export default function AuthPayModal({
               scrollEnabled={false}
               removeClippedSubviews
               renderItem={({ item }) => {
-                const ved =
-                  item.moneda === "VED"
-                    ? Number(item.montosaldo)
-                    : Number(item.montosaldo) * tasa;
-
-                const usd =
-                  item.moneda === "USD"
-                    ? Number(item.montosaldo)
-                    : Number(item.montosaldo) / tasa;
+       
 
                 return (
                   <View className="py-2 border-b border-muted dark:border-dark-background">
@@ -272,10 +256,7 @@ export default function AuthPayModal({
 
                     <View className="flex-row justify-end mt-1">
                       <Text className="text-xs text-primary dark:text-dark-primary">
-                        {totalVenezuela(ved)} {currencyVES}
-                      </Text>
-                      <Text className="text-xs text-foreground dark:text-dark-foreground ml-2">
-                        / {totalVenezuela(usd)} {currencyDollar}
+                        {totalVenezuela(Number(item.montosaldo))} {item.moneda}
                       </Text>
                     </View>
                   </View>
