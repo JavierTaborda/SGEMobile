@@ -29,34 +29,26 @@ export default function SuccessOverlay() {
   const contentScale = useSharedValue(0.85);
   const contentOpacity = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
-  const checkScale = useSharedValue(0); // Animación bounce del check
+  const checkScale = useSharedValue(0);
 
   // ---------- Animaciones ----------
-useEffect(() => {
-  if (visible) {
-    safeHaptic("success")
-    backdropOpacity.value = withTiming(1, {
-      duration: 400,
-      easing: Easing.out(Easing.ease),
-    });
-    contentOpacity.value = withTiming(1, { duration: 300 });
-    contentScale.value = withSpring(1, { damping: 20, stiffness: 100 });
-    glowOpacity.value = withTiming(1, { duration: 600 });
-    checkScale.value = withSpring(1.05, { damping: 15, stiffness: 120 });
-  } else {
-    backdropOpacity.value = withTiming(0, { duration: 300 });
-    contentOpacity.value = withTiming(0, { duration: 200 });
-    contentScale.value = withTiming(0.95, { duration: 200 });
-    glowOpacity.value = withTiming(0, { duration: 300 });
-    checkScale.value = withTiming(0, { duration: 200 });
-  }
-}, [visible]);
-
-  // // ---------- Auto-hide ----------
   useEffect(() => {
     if (visible) {
-      const t = setTimeout(hide, 2500);
-      return () => clearTimeout(t);
+      safeHaptic("success");
+      backdropOpacity.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.ease),
+      });
+      contentOpacity.value = withTiming(1, { duration: 300 });
+      contentScale.value = withSpring(1, { damping: 20, stiffness: 100 });
+      glowOpacity.value = withTiming(1, { duration: 600 });
+      checkScale.value = withSpring(1.05, { damping: 15, stiffness: 120 });
+    } else {
+      backdropOpacity.value = withTiming(0, { duration: 300 });
+      contentOpacity.value = withTiming(0, { duration: 200 });
+      contentScale.value = withTiming(0.95, { duration: 200 });
+      glowOpacity.value = withTiming(0, { duration: 300 });
+      checkScale.value = withTiming(0, { duration: 200 });
     }
   }, [visible]);
 
@@ -74,7 +66,7 @@ useEffect(() => {
     opacity: glowOpacity.value,
     transform: [
       {
-        scale: interpolate(glowOpacity.value, [0, 1], [0.8, 1.2]),
+        scale: interpolate(glowOpacity.value, [0, 1], [0.9, 1.3]),
       },
     ],
   }));
@@ -82,6 +74,13 @@ useEffect(() => {
   const checkStyle = useAnimatedStyle(() => ({
     transform: [{ scale: checkScale.value }],
   }));
+  // // ---------- Auto-hide ----------
+  useEffect(() => {
+    if (visible) {
+      const t = setTimeout(hide, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -96,63 +95,51 @@ useEffect(() => {
           className="bg-black/70"
         />
 
-        {/* GLOW Dback CHECK */}
+        {/* GLOW */}
         <Animated.View
-        className="absolute w-[80%] h-[60%] bg-primary dark:bg-dark-primary"
-          style={[
-            glowStyle,
-            {
-              top: height / 2 - 100,
-              left: width / 2 - 100,
-            },
-          ]}
+          className="absolute w-full h-full bg-primary/30 dark:bg-dark-primary/30"
+          style={glowStyle}
         />
 
-        {/* CONFETTI  */}
-        {visible && (
-          <ConfettiCannon
-            count={20}
-            origin={{ x: width / 2, y: height / 2 }}
-            fadeOut={true}
-            autoStart={true}
-            fallSpeed={1500}
-            explosionSpeed={200}
-          />
-        )}
+        {/* CONFETTI */}
 
         {/* CONTENT */}
         <View className="flex-1 justify-center items-center">
           <Pressable onPress={hide}>
             <Animated.View
-              style={contentStyle}
-              className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-5 py-4 items-center gap-3 shadow-2xl w-[80%]"
+              style={[
+                contentStyle,
+                { width: width * 0.8, height: height * 0.4 },
+              ]}
+              className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-6 py-6 items-center gap-4 shadow-2xl justify-center"
             >
               <Animated.View
-                style={[
-                  {
-                    width: 64,
-                    height: 64,
-                    borderRadius: 32,
-                    backgroundColor: "#22C55E",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                  checkStyle,
-                ]}
+                className="bg-green-600 dark:bg-green-400 shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center"
+                style={checkStyle}
               >
-                <MaterialCommunityIcons name="check" size={36} color="white" />
+                <MaterialCommunityIcons name="check" size={48} color="white" />
               </Animated.View>
 
-              <Text className="text-lg font-bold text-foreground dark:text-dark-foreground text-center">
+              <Text className="text-2xl font-bold text-foreground dark:text-dark-foreground text-center">
                 {title}
               </Text>
               {subtitle && (
-                <Text className="text-sm text-muted-foreground dark:text-dark-mutedForeground text-center">
+                <Text className="text-base text-muted-foreground dark:text-dark-mutedForeground text-center">
                   {subtitle}
                 </Text>
               )}
             </Animated.View>
           </Pressable>
+          {visible && (
+            <ConfettiCannon
+              count={60}
+              origin={{ x: width / 2, y: height / 2 }}
+              fadeOut={true}
+              autoStart={true}
+              fallSpeed={1200}
+              explosionSpeed={300}
+            />
+          )}
         </View>
       </View>
     </>
