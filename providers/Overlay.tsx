@@ -50,7 +50,7 @@ export default function Overlay() {
 
   useEffect(() => {
     if (visible) {
-      const t = setTimeout(hide, 1500);
+      const t = setTimeout(hide, 1700);
       return () => clearTimeout(t);
     }
   }, [visible]);

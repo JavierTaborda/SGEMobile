@@ -21,7 +21,7 @@ interface Props {
   onClose: () => void;
   items: AuthPay[];
   methods: MethodPay[];
-  onAuthorize: () => Promise<void>;
+  onAuthorize: () => Promise<void>;    
 }
 
 export default function AuthPayModal({
@@ -123,7 +123,7 @@ export default function AuthPayModal({
     setExpanded((v) => !v);
   }, []);
 
-  const handleAuthorize = useCallback(async () => {
+  const handleAuthorize = useCallback(async (currency: string, exchangeRate: number) => {
     if (!isValid) {
       setShowErrors(true);
       return;
@@ -133,10 +133,29 @@ export default function AuthPayModal({
       setIsLoading(true);
 
       await onAuthorize();
+    
+
+      const itemsAuthorized = items.map((item) => ({
+        ...item,
+        monedaautorizada: currency,
+        tasaautorizada: exchangeRate,
+        montoautorizado: currency === "USD"
+          ? Number(item.montosaldo) / (item.moneda === "USD" ? 1 : exchangeRate)
+          : Number(item.montosaldo) * (item.moneda === "USD" ? exchangeRate : 1),
+      }));
+
+      const total = itemsAuthorized.reduce(
+        (acc, item) => acc + Number(item.montoautorizado),
+        0
+
+      );
+
 
       overlay.show("success", {
         title: "Pagos autorizados",
-        subtitle: `${items.length} documentos procesados`,
+        subtitle: `${items.length} documentos procesados por ${totalVenezuela(
+         total
+        )} ${targetCurrency ?? ""}`,
       });
 
       onClose();
@@ -274,7 +293,7 @@ export default function AuthPayModal({
             isValid ? "bg-primary dark:bg-dark-primary " : "bg-gray-400"
           }`}
           disabled={isLoading}
-          onPress={handleAuthorize}
+          onPress={() => handleAuthorize(targetCurrency ?? "", tasa)}
         >
           <Text className="text-white text-center font-bold">
             {isLoading ? "Procesando..." : `Autorizar (${items.length})`}
