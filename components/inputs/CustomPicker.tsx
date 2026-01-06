@@ -59,7 +59,7 @@ export default function CustomPicker({
     <View className="w-full">
       {/* INPUT */}
       <View
-        className={`flex-row items-center gap-3 min-h-[52px] px-4 rounded-xl border
+        className={`flex-row items-center gap-3 min-h-[48px] px-4 rounded-xl border
         bg-white dark:bg-dark-componentbg
         ${
           focused

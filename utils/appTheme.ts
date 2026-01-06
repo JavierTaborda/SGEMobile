@@ -1,7 +1,7 @@
 
 export const appTheme = {
   primary: {
-    DEFAULT: "rgb(59, 130, 246)", //"rgb(35, 162, 71)",
+    DEFAULT: "rgb(11,109, 208)", //"rgb(35, 162, 71)",
     light: "rgb(76, 207, 120)",
     pale: "rgb(135, 255, 135)",
   },
