@@ -273,7 +273,7 @@ export default function AuthPayModal({
           {requiresRate && tasa > 0 && (
             <View className="mt-1 flex-row justify-start">
               <Text className="text-xs text-mutedForeground dark:text-dark-mutedForeground">
-                Equivale aprox. a{" "}
+                ≈{" "}
                 <Text className="font-semibold text-primary dark:text-dark-primary">
                   {totalVenezuela(
                     targetCurrency === "USD" ? totals.ved : totals.usd
@@ -333,7 +333,7 @@ export default function AuthPayModal({
             </Text>
           </TouchableOpacity>
 
-          <Animated.View style={expandStyle} className="overflow-hidden mt-3">
+          <Animated.View style={expandStyle} className="overflow-hidden">
             <FlatList
               data={items}
               keyExtractor={(i) => String(i.numerodocumento)}
