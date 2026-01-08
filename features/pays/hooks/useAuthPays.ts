@@ -1,11 +1,11 @@
 import { useRefreshControl } from '@/utils/userRefreshControl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PlanPagos } from '../interfaces/PlanPagos';
 import { getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
-import { AuthPay } from '../types/AuthPay';
 import { MethodPay } from '../types/MethodPay';
 
 export function useAuthPays(searchText: string) {
-  const [pays, setPays] = useState<AuthPay[]>([]);
+  const [pays, setPays] = useState<PlanPagos[]>([]);
   const [methods, setMethods] = useState<MethodPay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,18 +25,18 @@ export function useAuthPays(searchText: string) {
 
   const totalAutorizadoVED = useMemo(() => {
     return filteredPays
-      .filter((d) => d.monedaautorizada === 'VED' && d.autorizadopagar === '1')
-      .reduce((acc, item) => acc + parseFloat(item.montoautorizado), 0);
+      .filter((d) => d.monedaautorizada === 'VED' && d.autorizadopagar === 1)
+      .reduce((acc, item) => acc + Number(item.montoautorizado), 0);
   }, [filteredPays]);
 
   const totalAutorizadoUSD = useMemo(() => {
     return filteredPays
-      .filter((d) => d.monedaautorizada === 'USD' && d.autorizadopagar === '1')
-      .reduce((acc, item) => acc + parseFloat(item.montoautorizado), 0);
+      .filter((d) => d.monedaautorizada === 'USD' && d.autorizadopagar === 0)
+      .reduce((acc, item) => acc + Number(item.montoautorizado), 0);
   }, [filteredPays]);
 
   const totalDocumentsAuth = useMemo(() => {
-    return filteredPays.filter((d) => d.autorizadopagar === '1').length;
+    return filteredPays.filter((d) => d.autorizadopagar === 0 ).length;
   }, [filteredPays]);
 
   // Refresh
@@ -58,7 +58,6 @@ export function useAuthPays(searchText: string) {
         getPaysToAuthorize(),
         getMethodPays(),
       ]);
-
 
 
       setPays(paysData);

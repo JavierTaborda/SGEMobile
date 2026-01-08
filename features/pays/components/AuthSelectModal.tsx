@@ -20,13 +20,14 @@ import BottomModal from "@/components/ui/BottomModal";
 import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import { totalVenezuela } from "@/utils/moneyFormat";
 
-import { AuthPay } from "../types/AuthPay";
+import { PlanPagos } from "../interfaces/PlanPagos";
+
 import { MethodPay } from "../types/MethodPay";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  items: AuthPay[];
+  items: PlanPagos[];
   methods: MethodPay[];
   onAuthorize: () => Promise<void>;
 }
@@ -34,7 +35,7 @@ interface Props {
 /* ----------------------- HELPERS ----------------------- */
 
 function buildAuthorizedItems(
-  items: AuthPay[],
+  items: PlanPagos[],
   currency: string,
   rate: number,
   customAmount?: number // optional override for single item
@@ -60,7 +61,7 @@ function buildAuthorizedItems(
 }
 
 function useAuthPayRules(
-  items: AuthPay[],
+  items: PlanPagos[],
   methods: MethodPay[],
   formaPago: string
 ) {
@@ -73,7 +74,7 @@ function useAuthPayRules(
     for (const i of items) {
       if (i.moneda === "USD") hasUSD = true;
       if (i.moneda === "VED") hasVED = true;
-      if (i.autorizadopagar === "1") isAuth = true;
+      if (i.autorizadopagar === 1) isAuth = true;
       if (!fallbackCurrency && i.moneda) fallbackCurrency = i.moneda;
     }
 
@@ -92,7 +93,7 @@ function useAuthPayRules(
   }, [items, methods, formaPago]);
 }
 
-function useAuthPayTotals(items: AuthPay[], tasa: number, currency?: string) {
+function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
   return useMemo(() => {
     if (tasa <= 0) return { ved: 0, usd: 0, totalFinal: 0 };
 

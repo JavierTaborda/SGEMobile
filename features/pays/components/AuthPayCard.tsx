@@ -13,14 +13,14 @@ import {
   currencyVES,
   totalVenezuela,
 } from "@/utils/moneyFormat";
-import { AuthPay } from "../types/AuthPay";
+import { PlanPagos } from "../interfaces/PlanPagos";
 
 interface Props {
-  item: AuthPay;
+  item: PlanPagos;
   selected?: boolean;
   selectionMode?: boolean;
-  onSelect?: (auth: AuthPay) => void;
-  onPress?: (item: AuthPay) => void;
+  onSelect?: (auth: PlanPagos) => void;
+  onPress?: (item: PlanPagos) => void;
   onLongPress?: () => void;
 }
 
@@ -32,7 +32,7 @@ export default function AuthPayCard({
   onPress,
   onLongPress,
 }: Props) {
-  const isAuth = item.autorizadopagar === "1";
+  const isAuth = item.autorizadopagar === 1;
   const currencyBs = item.monedaautorizada === "VED";
 
   /* ANIMATION VALUES (VISIBLE BY DEFAULT) */
@@ -66,7 +66,7 @@ export default function AuthPayCard({
   }));
 
   /* HANDLERS*/
-  const handlePress = () => {
+  const handlePress = () => { 
     if (selectionMode) {
       onSelect?.(item);
     } else {
@@ -185,7 +185,7 @@ export default function AuthPayCard({
               <Text className="text-sm  text-gray-500 dark:text-gray-400">
                 Fecha{" "}
                 <Text className="font-medium text-foreground dark:text-dark-foreground">
-                  {dateMonthText(item.fechaemision)}
+                  {dateMonthText(item.fechaemision.toString())}
                 </Text>
               </Text>
             </View>
@@ -228,7 +228,7 @@ export default function AuthPayCard({
                       <Text
                         className={`text-xl font-bold ${currencyBs ? `text-primary dark:text-dark-primary` : `text-green-600 dark:text-green-400`} `}
                       >
-                        {totalVenezuela(item.montoautorizado)}{" "}
+                        {totalVenezuela(Number(item.montoautorizado))}{" "}
                         {item.monedaautorizada}
                       </Text>
                     </View>
@@ -239,7 +239,7 @@ export default function AuthPayCard({
                       Tasa autorizada
                     </Text>
                     <Text className="text-sm font-medium pt-1 text-black dark:text-white">
-                      {totalVenezuela(item.tasaautorizada)}
+                      {totalVenezuela(Number(item.tasaautorizada))}
                     </Text>
                   </View>
                 </View>
@@ -254,7 +254,8 @@ export default function AuthPayCard({
                     Preferible pagar
                   </Text>
                   <Text className="text-sm font-semibold text-black dark:text-white">
-                    EURO TASA BCV
+                   
+                    {item.monedaproveedor}
                   </Text>
                 </View>
               )}

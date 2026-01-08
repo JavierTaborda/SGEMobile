@@ -1,7 +1,40 @@
-import { PlanPagosBase } from "./PlanPasgosBase";
 
-// MYSQL
-export interface PlanPagos extends PlanPagosBase {
+
+export interface PlanPagos  {
+    //SQl
+    unidad: string;
+    empresa: string;
+    tipodocumento: string;
+    numerodocumento: number;
+    codigobeneficiario?: string | null;
+    beneficiario: string;
+    titularcuenta?: string | null;
+    cuentabanco?: string | null;
+    banco?: string | null;
+    rifproveedor: string;
+    tipoproveedor: string;
+    autorizadopagar: number;
+    registradopor: string;
+    fechaemision: string | Date;
+    fechavencimiento: string | Date;
+    fecharegistro: string | Date;
+    numerofactura: string | number;
+    observacion?: string | null;
+    tasacambio: string | number;
+    moneda: string;
+    montoneto: string | number;
+    montosaldo: string | number;
+    monedaproveedor?: string | null;
+    tipocuenta?: string | null;
+    clasegasto?: string | null;
+    origenhes: number | boolean;
+    linkproforma?: string | null;
+    owneruser: number;
+    // campos extras que solo existen en origen
+    profite?: string;
+    planificado?: string;
+    //Mysql
+
     planpagonumero: number;
     autorizadonumero: number;
     codigobanco?: string | null;
@@ -10,7 +43,7 @@ export interface PlanPagos extends PlanPagosBase {
     fechaautorizadopor?: Date | null;
     autorizadopor?: string | null;
     tasaautorizada?: number | null;
-    montoautorizado?: string | null;
+    montoautorizado?: number | null;
     monedaautorizada?: string | null;
     empresapagadora?: string | null;
     pagado: boolean;

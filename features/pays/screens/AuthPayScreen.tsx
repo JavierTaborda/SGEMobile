@@ -20,7 +20,8 @@ import AuthPayCard from "../components/AuthPayCard";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
 import AuthSelectModal from "../components/AuthSelectModal";
 import FiltersModal from "../components/PayFilterModal";
-import { AuthPay } from "../types/AuthPay";
+import { PlanPagos } from "../interfaces/PlanPagos";
+
 
 export default function AuthorizationScreen() {
   /* FILTERS / SEARCH*/
@@ -54,7 +55,7 @@ export default function AuthorizationScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const toggleSelect = useCallback((item: AuthPay) => {
+  const toggleSelect = useCallback((item: PlanPagos) => {
     safeHaptic("selection");
     setSelectionMode(true);
 
@@ -131,7 +132,7 @@ export default function AuthorizationScreen() {
 
 
   const renderItem = useCallback(
-    ({ item }: { item: AuthPay }) => {
+    ({ item }: { item: PlanPagos }) => {
       const id = String(item.numerodocumento);
 
       return (
