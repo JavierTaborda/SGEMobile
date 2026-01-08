@@ -7,11 +7,16 @@ export const getPaysToAuthorize = async () => {
   const response = await API.get('/pays/documents');
   const documents: PlanPagos[] = response.data;
   return documents;
- // return AuthPayData
+  // return AuthPayData
 };
 
 export const getMethodPays = async () => {
   const response = await API.get('/pays/methods');
+  return response.data;
+
+};
+export const authDocuments = async () => {
+  const response = await API.post('/pays/');
   return response.data;
 
 };

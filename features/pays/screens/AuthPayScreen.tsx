@@ -1,6 +1,7 @@
 import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
+import PagerView from "react-native-pager-view";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -16,12 +17,13 @@ import { totalVenezuela } from "@/utils/moneyFormat";
 import { safeHaptic } from "@/utils/safeHaptics";
 
 import ErrorView from "@/components/ui/ErrorView";
+import { AuthorizedItem } from "../components/AuthItem";
 import AuthPayCard from "../components/AuthPayCard";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
 import AuthSelectModal from "../components/AuthSelectModal";
 import FiltersModal from "../components/PayFilterModal";
 import { PlanPagos } from "../interfaces/PlanPagos";
-
+import { authDocuments } from "../services/AuthPaysServices";
 
 export default function AuthorizationScreen() {
   /* FILTERS / SEARCH*/
@@ -29,7 +31,8 @@ export default function AuthorizationScreen() {
   const [company, setCompany] = useState("CYBERLUX");
   const [authorized, setAuthorized] = useState(false);
   const [currency, setCurrency] = useState("VED");
-
+  const [tab, setTab] = useState<"pending" | "authorized">("pending");
+  const pagerRef = useRef<PagerView>(null);
   const { isDark } = useThemeStore();
 
   /* DATA*/
@@ -50,7 +53,6 @@ export default function AuthorizationScreen() {
   /*MODALS*/
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [authSelectModalVisible, setAuthSelectModalVisible] = useState(false);
-
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -125,11 +127,10 @@ export default function AuthorizationScreen() {
   }, [selectionMode, selectedIds.size, totalDocumentsAuth]);
 
   /*HANDLERS */
-  
+
   const handleAuthorize = useCallback(() => {
     setAuthSelectModalVisible(true);
   }, []);
-
 
   const renderItem = useCallback(
     ({ item }: { item: PlanPagos }) => {
@@ -165,10 +166,30 @@ export default function AuthorizationScreen() {
         extrafilter={false}
         headerVisible={false}
       >
-        {/* HEADER */}
-        <Animated.View
-          style={headerAnimatedStyle}
-          className={`
+        <View className="flex-row justify-center mb-1 px-3 ">
+          <View
+            className={`h-1 w-[47%] rounded-full ${tab === "pending" ? "bg-primary dark:bg-dark-primary" : "bg-gray-300 dark:bg-dark-componentbg"}`}
+          />
+          <View
+            className={`h-1 w-[47%] rounded-full ml-2 ${tab === "authorized" ? "bg-primary dark:bg-dark-primary" : "bg-gray-300 dark:bg-dark-componentbg"}`}
+          />
+        </View>
+
+        <PagerView
+          ref={pagerRef}
+          style={{ flex: 1 }}
+          initialPage={0}
+          onPageSelected={(e) => {
+            const index = e.nativeEvent.position;
+            setTab(index === 0 ? "pending" : "authorized");
+          }}
+          scrollEnabled={!selectionMode}
+        >
+          <View key="1">
+            {/* HEADER */}
+            <Animated.View
+              style={headerAnimatedStyle}
+              className={`
             px-3 py-4 mx-4 mt-2 mb-4 rounded-2xl
             flex-row items-center justify-between
             ${
@@ -177,10 +198,10 @@ export default function AuthorizationScreen() {
                 : "bg-componentbg dark:bg-dark-componentbg"
             }
           `}
-        >
-          <View className="flex-row items-center gap-3">
-            <View
-              className={`
+            >
+              <View className="flex-row items-center gap-3">
+                <View
+                  className={`
                 w-9 h-9 rounded-xl items-center justify-center
                 ${
                   selectionMode
@@ -188,23 +209,25 @@ export default function AuthorizationScreen() {
                     : "bg-gray-200 dark:bg-gray-700"
                 }
               `}
-            >
-              <Entypo name="documents" size={20} color="white" />
-            </View>
+                >
+                  <Entypo name="documents" size={20} color="white" />
+                </View>
 
-            <View>
-              <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">{headerTitle}</Text>
-              <Text className="text-xs text-gray-500 dark:text-gray-400">
-                {selectionMode
-                  ? "Selecciona documentos a autorizar"
-                  : "Pagos pendientes de autorización"}
-              </Text>
-            </View>
-          </View>
+                <View>
+                  <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
+                    {headerTitle}
+                  </Text>
+                  <Text className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectionMode
+                      ? "Selecciona documentos a autorizar"
+                      : "Pagos pendientes de autorización"}
+                  </Text>
+                </View>
+              </View>
 
-          <TouchableOpacity
-            onPress={selectionMode ? exitSelectionMode : enterSelectionMode}
-            className={`
+              <TouchableOpacity
+                onPress={selectionMode ? exitSelectionMode : enterSelectionMode}
+                className={`
               px-3 py-2 rounded-xl flex-row items-center gap-2
               ${
                 selectionMode
@@ -212,45 +235,65 @@ export default function AuthorizationScreen() {
                   : "bg-primary/10 border border-primary"
               }
             `}
-          >
-            <MaterialCommunityIcons
-              name="checkbox-multiple-marked-outline"
-              size={18}
-              color={
-                selectionMode
-                  ? appTheme.error
-                  : isDark
-                    ? appTheme.dark.primary.DEFAULT
-                    : appTheme.primary.DEFAULT
-              }
-            />
-            <Text
-              className={`font-semibold text-sm ${
-                selectionMode
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-primary dark:text-dark-primary"
-              }`}
-            >
-              {selectionMode ? "Cancelar" : "Seleccionar"}
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
+              >
+                <MaterialCommunityIcons
+                  name="checkbox-multiple-marked-outline"
+                  size={18}
+                  color={
+                    selectionMode
+                      ? appTheme.error
+                      : isDark
+                        ? appTheme.dark.primary.DEFAULT
+                        : appTheme.primary.DEFAULT
+                  }
+                />
+                <Text
+                  className={`font-semibold text-sm ${
+                    selectionMode
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-primary dark:text-dark-primary"
+                  }`}
+                >
+                  {selectionMode ? "Cancelar" : "Seleccionar"}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
 
-        {/* LIST */}
-        <CustomFlatList
-          data={filteredPays}
-          keyExtractor={(item) => String(item.numerodocumento)}
-          refreshing={refreshing}
-          canRefresh={canRefresh}
-          handleRefresh={handleRefresh}
-          cooldown={cooldown}
-          showtitle
-          title="Total autorizado"
-          subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
-            totalAutorizadoUSD
-          )} $`}
-          renderItem={renderItem}
-        />
+            {/* LIST */}
+            <CustomFlatList
+              data={filteredPays}
+              keyExtractor={(item) => String(item.numerodocumento)}
+              refreshing={refreshing}
+              canRefresh={canRefresh}
+              handleRefresh={handleRefresh}
+              cooldown={cooldown}
+              showtitle
+              title="Total autorizado"
+              subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
+                totalAutorizadoUSD
+              )} $`}
+              renderItem={renderItem}
+            />
+          </View>
+
+          <View key="2">
+            {/* LIST */}
+            <CustomFlatList
+              data={filteredPays.filter((d) => d.autorizadopagar === 0)}
+              keyExtractor={(item) => String(item.numerodocumento)}
+              refreshing={refreshing}
+              canRefresh={canRefresh}
+              handleRefresh={handleRefresh}
+              cooldown={cooldown}
+              showtitle
+              title="Total autorizado"
+              subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
+                totalAutorizadoUSD
+              )} $`}
+              renderItem={({ item }) => <AuthorizedItem item={item} />}
+            />
+          </View>
+        </PagerView>
       </ScreenSearchLayout>
 
       {/* FLOATING CTA */}
@@ -307,6 +350,7 @@ export default function AuthorizationScreen() {
           methods={methods}
           onClose={() => setAuthSelectModalVisible(false)}
           onAuthorize={async () => {
+            authDocuments();
             setAuthSelectModalVisible(false);
             exitSelectionMode();
           }}

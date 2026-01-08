@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       // Info
       overlay.show("info", { title: "Versión instalada", subtitle: "App actualizada a v1.2" });
       ```
+  - Added  `react-native-pager-view` library.
 
 ### Changed
 
