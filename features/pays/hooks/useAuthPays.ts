@@ -1,3 +1,4 @@
+import { safeHaptic } from '@/utils/safeHaptics';
 import { useRefreshControl } from '@/utils/userRefreshControl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { groupAuthorizedPays } from '../helpers/groupAuthorizedPays';
@@ -37,11 +38,11 @@ export function useAuthPays(searchText: string) {
   }, [filteredPays]);
 
   const totalDocumentsAuth = useMemo(() => {
-    return filteredPays.filter((d) => d.autorizadopagar === 1 ).length;
+    return filteredPays.filter((d) => d.autorizadopagar === 1).length;
   }, [filteredPays]);
-  
+
   const totalDocumentsUnAuth = useMemo(() => {
-    return filteredPays.filter((d) => d.autorizadopagar === 0 ).length;
+    return filteredPays.filter((d) => d.autorizadopagar === 0).length;
   }, [filteredPays]);
 
   // Refresh
@@ -96,16 +97,68 @@ export function useAuthPays(searchText: string) {
     },
     []
   );
-    const authorizedData = useMemo(() => {
-      return groupAuthorizedPays(
-        filteredPays.filter((d) => d.autorizadopagar === 1)
-      );
-    }, [filteredPays]);
-  
+  const authorizedData = useMemo(() => {
+    return groupAuthorizedPays(
+      filteredPays.filter((d) => d.autorizadopagar === 1)
+    );
+  }, [filteredPays]);
+
   /*MODALS*/
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [authSelectModalVisible, setAuthSelectModalVisible] = useState(false);
 
+  /*selection mode */
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const exitSelectionMode = useCallback(() => {
+    safeHaptic("selection");
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const enterSelectionMode = useCallback(() => {
+    safeHaptic("selection");
+    setSelectionMode(true);
+  }, []);
+
+  const selectedItems = useMemo(
+    () =>
+      filteredPays.filter((i) => selectedIds.has(String(i.numerodocumento))),
+    [filteredPays, selectedIds]
+  );
+
+
+    const toggleSelect = useCallback((item: PlanPagos) => {
+      safeHaptic("selection");
+      setSelectionMode(true);
+  
+      const id = String(item.numerodocumento);
+  
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+      });
+    }, []);
+  /* HEADER TEXT */
+  const headerTitle = useMemo(() => {
+    if (!selectionMode) return `${filteredPays.length} documentos`;
+    return `${selectedIds.size}/${filteredPays.length} documentos`;
+  }, [selectionMode, selectedIds.size, totalDocumentsAuth]);
+
+
+  /*HANDLERS */
+
+  const handleAuthorize = useCallback(() => {
+    setAuthSelectModalVisible(true);
+  }, []);
+
+  const udapteDocuments = async (documents: PlanPagos[]) => {
+    applyAuthorizationUpdate(documents);
+    setAuthSelectModalVisible(false);
+    exitSelectionMode();
+  };
 
   return {
     pays,
@@ -127,5 +180,16 @@ export function useAuthPays(searchText: string) {
     setFilterModalVisible,
     authSelectModalVisible,
     setAuthSelectModalVisible,
+    selectionMode,
+    setSelectionMode,
+    selectedIds,
+    setSelectedIds,
+    exitSelectionMode,
+    enterSelectionMode,
+    selectedItems,
+    headerTitle,
+    handleAuthorize,
+    udapteDocuments,
+    toggleSelect
   };
 }

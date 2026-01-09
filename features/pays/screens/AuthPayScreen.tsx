@@ -1,5 +1,5 @@
 import { Entypo, MaterialCommunityIcons, Octicons } from "@expo/vector-icons";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import PagerView from "react-native-pager-view";
 import Animated, {
@@ -54,40 +54,21 @@ export default function AuthorizationScreen() {
     setFilterModalVisible,
     authSelectModalVisible,
     setAuthSelectModalVisible,
+    selectionMode,
+    setSelectionMode,
+    selectedIds,
+    setSelectedIds,
+    exitSelectionMode,
+    enterSelectionMode,
+    selectedItems,
+    toggleSelect,
+    headerTitle,
+    handleAuthorize,
+    udapteDocuments,
+
   } = useAuthPays(searchText);
 
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const toggleSelect = useCallback((item: PlanPagos) => {
-    safeHaptic("selection");
-    setSelectionMode(true);
-
-    const id = String(item.numerodocumento);
-
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
-  const exitSelectionMode = useCallback(() => {
-    safeHaptic("selection");
-    setSelectionMode(false);
-    setSelectedIds(new Set());
-  }, []);
-
-  const enterSelectionMode = useCallback(() => {
-    safeHaptic("selection");
-    setSelectionMode(true);
-  }, []);
-
-  const selectedItems = useMemo(
-    () =>
-      filteredPays.filter((i) => selectedIds.has(String(i.numerodocumento))),
-    [filteredPays, selectedIds]
-  );
 
   /* HEADER ANIMATION */
   const headerScale = useSharedValue(1);
@@ -122,17 +103,7 @@ export default function AuthorizationScreen() {
     opacity: ctaOpacity.value,
   }));
 
-  /* HEADER TEXT */
-  const headerTitle = useMemo(() => {
-    if (!selectionMode) return `${filteredPays.length} documentos`;
-    return `${selectedIds.size}/${filteredPays.length} documentos`;
-  }, [selectionMode, selectedIds.size, totalDocumentsAuth]);
 
-  /*HANDLERS */
-
-  const handleAuthorize = useCallback(() => {
-    setAuthSelectModalVisible(true);
-  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: PlanPagos }) => {
@@ -155,11 +126,6 @@ export default function AuthorizationScreen() {
     [selectionMode, selectedIds, toggleSelect]
   );
 
-  const udapteDocuments = async (documents: PlanPagos[]) => {
-    applyAuthorizationUpdate(documents);
-    setAuthSelectModalVisible(false);
-    exitSelectionMode();
-  };
 
   if (loading) return <AuthPaySkeleton />;
   if (error) return <ErrorView error={error} getData={handleRefresh} />;
