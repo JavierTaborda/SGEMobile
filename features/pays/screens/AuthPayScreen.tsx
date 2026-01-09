@@ -1,4 +1,4 @@
-import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Entypo, MaterialCommunityIcons, Octicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import PagerView from "react-native-pager-view";
@@ -17,13 +17,12 @@ import { totalVenezuela } from "@/utils/moneyFormat";
 import { safeHaptic } from "@/utils/safeHaptics";
 
 import ErrorView from "@/components/ui/ErrorView";
-import { AuthorizedItem } from "../components/AuthItem";
+import AuthorizedGroupedList from "../components/AuthorizedGroupedList";
 import AuthPayCard from "../components/AuthPayCard";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
 import AuthSelectModal from "../components/AuthSelectModal";
 import FiltersModal from "../components/PayFilterModal";
 import { PlanPagos } from "../interfaces/PlanPagos";
-import { authDocuments } from "../services/AuthPaysServices";
 
 export default function AuthorizationScreen() {
   /* FILTERS / SEARCH*/
@@ -41,6 +40,7 @@ export default function AuthorizationScreen() {
     loading,
     methods,
     totalDocumentsAuth,
+    totalDocumentsUnAuth,
     totalAutorizadoUSD,
     totalAutorizadoVED,
     handleRefresh,
@@ -48,11 +48,13 @@ export default function AuthorizationScreen() {
     cooldown,
     canRefresh,
     error,
+    applyAuthorizationUpdate,
+    authorizedData,
+    filterModalVisible,
+    setFilterModalVisible,
+    authSelectModalVisible,
+    setAuthSelectModalVisible,
   } = useAuthPays(searchText);
-
-  /*MODALS*/
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [authSelectModalVisible, setAuthSelectModalVisible] = useState(false);
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -122,8 +124,8 @@ export default function AuthorizationScreen() {
 
   /* HEADER TEXT */
   const headerTitle = useMemo(() => {
-    if (!selectionMode) return `${totalDocumentsAuth} documentos`;
-    return `${selectedIds.size}/${totalDocumentsAuth} documentos`;
+    if (!selectionMode) return `${filteredPays.length} documentos`;
+    return `${selectedIds.size}/${filteredPays.length} documentos`;
   }, [selectionMode, selectedIds.size, totalDocumentsAuth]);
 
   /*HANDLERS */
@@ -152,6 +154,12 @@ export default function AuthorizationScreen() {
     },
     [selectionMode, selectedIds, toggleSelect]
   );
+
+  const udapteDocuments = async (documents: PlanPagos[]) => {
+    applyAuthorizationUpdate(documents);
+    setAuthSelectModalVisible(false);
+    exitSelectionMode();
+  };
 
   if (loading) return <AuthPaySkeleton />;
   if (error) return <ErrorView error={error} getData={handleRefresh} />;
@@ -278,20 +286,38 @@ export default function AuthorizationScreen() {
 
           <View key="2">
             {/* LIST */}
-            <CustomFlatList
-              data={filteredPays.filter((d) => d.autorizadopagar === 0)}
-              keyExtractor={(item) => String(item.numerodocumento)}
-              refreshing={refreshing}
-              canRefresh={canRefresh}
-              handleRefresh={handleRefresh}
-              cooldown={cooldown}
-              showtitle
-              title="Total autorizado"
-              subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
-                totalAutorizadoUSD
-              )} $`}
-              renderItem={({ item }) => <AuthorizedItem item={item} />}
-            />
+
+            <View
+              className=" px-3 py-4 mx-4 mt-2 mb-1 rounded-2xl
+            flex-row items-center justify-between bg-componentbg dark:bg-dark-componentbg"
+            >
+              <View className="flex-row items-center gap-3">
+                <View
+                  className={`w-9 h-9 rounded-xl items-center justify-center bg-gray-200 dark:bg-gray-700`}
+                >
+                  <Octicons name="checklist" size={18} color="white" />
+                </View>
+
+                <View>
+                  <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
+                    {totalDocumentsAuth} pagos autorizados
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View className=" mx-4 mt-2 mb-2 rounded-2xl px-2 py-3 items-center  bg-componentbg dark:bg-dark-componentbg">
+              <Text className="text-foreground dark:text-dark-foreground font-semibold ">
+                {totalVenezuela(totalAutorizadoVED)} VED / 
+                {" "}{totalVenezuela(totalAutorizadoUSD)} $
+              </Text>
+            </View>
+
+            {totalDocumentsAuth > 0 ? (
+              <AuthorizedGroupedList data={authorizedData} />
+            ) : (
+              <Text className="text-foreground dark:text-dark-foreground text-center pt-2 font-semibold">Sin documentos autorizados.</Text>
+            )}
           </View>
         </PagerView>
       </ScreenSearchLayout>
@@ -349,11 +375,7 @@ export default function AuthorizationScreen() {
           items={selectedItems}
           methods={methods}
           onClose={() => setAuthSelectModalVisible(false)}
-          onAuthorize={async () => {
-            authDocuments();
-            setAuthSelectModalVisible(false);
-            exitSelectionMode();
-          }}
+          onAuthorize={udapteDocuments}
         />
       )}
     </>

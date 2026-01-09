@@ -29,7 +29,7 @@ interface Props {
   onClose: () => void;
   items: PlanPagos[];
   methods: MethodPay[];
-  onAuthorize: () => Promise<void>;
+  onAuthorize: (authorizedItems: PlanPagos[]) => Promise<void>; // 👈
 }
 
 /* ----------------------- HELPERS ----------------------- */
@@ -56,6 +56,7 @@ function buildAuthorizedItems(
       monedaautorizada: currency,
       tasaautorizada: rate,
       montoautorizado,
+      autorizadopagar: 1,
     };
   });
 }
@@ -200,7 +201,6 @@ export default function AuthPayModal({
     try {
       setIsLoading(true);
 
-
       const customAmount = customAuthorizedAmount
         ? Number(customAuthorizedAmount)
         : undefined;
@@ -212,14 +212,12 @@ export default function AuthPayModal({
         customAmount
       );
 
- 
-
       const total = itemsAuthorized.reduce(
         (a, i) => a + Number(i.montoautorizado),
         0
       );
 
-      await onAuthorize();
+      await onAuthorize(itemsAuthorized);
 
       overlay.show("success", {
         title: "Pagos autorizados",
@@ -229,7 +227,7 @@ export default function AuthPayModal({
       onClose();
     } catch (error) {
       overlay.show("error", {
-        title: "Error al autorizar",
+        title: "Error al autoriz  ar",
         subtitle: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -288,42 +286,59 @@ export default function AuthPayModal({
 
         {/* Form */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4 gap-4">
-          <CustomPicker
-            selectedValue={formaPago}
-            onValueChange={setFormaPago}
-            items={methods.map((m) => ({
-              label: m.textList,
-              value: String(m.codigounico),
-            }))}
-            placeholder="Seleccione método de pago"
-            error={
-              showErrors && !formaPago
-                ? "Seleccione un método de pago"
-                : undefined
-            }
-          />
-
+          <View>
+            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground pb-1">
+              Forma de pago
+            </Text>
+            <CustomPicker
+              selectedValue={formaPago}
+              onValueChange={setFormaPago}
+              items={methods.map((m) => ({
+                label: m.textList,
+                value: String(m.codigounico),
+              }))}
+              placeholder="Seleccione método de pago"
+              error={
+                showErrors && !formaPago
+                  ? "Seleccione un método de pago"
+                  : undefined
+              }
+            />
+          </View>
           {requiresRate && (
             <>
-              <RateInput value={tasa} onChangeValue={setTasa} />
+              <View>
+                <View className="flex-row gap-2 items-center">
+                  <Text className="text-lg font-bold text-foreground dark:text-dark-foreground ">
+                    Tasa autorizada
+                  </Text>
 
-              <View className="px-3 py-2 rounded-xl bg-primary/10 dark:bg-dark-primary/10">
-                <Text className="text-xs text-primary dark:text-dark-primary font-medium">
-                  Tasa requerida para conversión entre monedas
-                </Text>
+                  <Text className="text-xs text-primary dark:text-dark-primary font-medium">
+                    (Requerida)
+                  </Text>
+                </View>
+                <RateInput value={tasa} onChangeValue={setTasa} />
               </View>
             </>
           )}
 
-          {showSingleItemAmountInput &&
-            requiresRate && (
+          {showSingleItemAmountInput && requiresRate && (
+            <View>
+              <Text className="text-lg font-bold text-foreground dark:text-dark-foreground ">
+                Monto autorizado
+              </Text>
               <CustomTextInput
-                value={customAuthorizedAmount ? totalVenezuela(customAuthorizedAmount) : "" }
+                value={
+                  customAuthorizedAmount
+                    ? totalVenezuela(customAuthorizedAmount)
+                    : ""
+                }
                 onChangeText={setCustomAuthorizedAmount}
                 placeholder={totalVenezuela(suggestedAmount) || "Ingrese monto"}
                 keyboardType="numeric"
               />
-            )}
+            </View>
+          )}
         </View>
 
         {/* Details */}
@@ -360,7 +375,7 @@ export default function AuthPayModal({
       {/* Footer */}
       <View className="pb-4 gap-3">
         <TouchableOpacity
-          className={`rounded-xl py-4 bg-primary ${(!isValid || isLoading) && "opacity-50"}`}
+          className={`rounded-xl py-4 bg-primary dark:bg-dark-primary ${(!isValid || isLoading) && "opacity-50"}`}
           disabled={!isValid || isLoading}
           onPress={handleAuthorize}
         >
@@ -371,7 +386,7 @@ export default function AuthPayModal({
 
         {isAuth && (
           <TouchableOpacity
-            className="rounded-xl py-4 border border-primary"
+            className="rounded-xl py-4 border border-primary dark:border-dark-primary"
             onPress={onClose}
           >
             <Text className="text-primary dark:text-dark-primary text-center font-bold">

@@ -89,8 +89,9 @@ export default function AuthPayCard({
           
         `}
       >
-        <View className={`flex-row ${selectionMode?`ps-1 `:`ps-4` } pe-4 py-4`}>
-   
+        <View
+          className={`flex-row ${selectionMode ? `ps-1 ` : `ps-4`} pe-4 py-4`}
+        >
           {selectionMode && (
             <Animated.View
               style={checkboxStyle}
@@ -198,7 +199,8 @@ export default function AuthPayCard({
                     Total saldo
                   </Text>
                   <Text className="text-lg font-semibold text-black dark:text-white">
-                    {totalVenezuela(item.montoneto)} {item.moneda}
+                    {totalVenezuela(item.montoneto)}{" "}
+                    {item.moneda==="VED" ? 'VED' : currencyDollar}
                   </Text>
                 </View>
 
@@ -229,7 +231,7 @@ export default function AuthPayCard({
                         className={`text-xl font-bold ${currencyBs ? `text-primary dark:text-dark-primary` : `text-green-600 dark:text-green-400`} `}
                       >
                         {totalVenezuela(Number(item.montoautorizado))}{" "}
-                        {item.monedaautorizada}
+                        {currencyBs ? item.monedaautorizada : currencyDollar}
                       </Text>
                     </View>
                   </View>
@@ -254,7 +256,6 @@ export default function AuthPayCard({
                     Preferible pagar
                   </Text>
                   <Text className="text-sm font-semibold text-black dark:text-white">
-                   
                     {item.monedaproveedor}
                   </Text>
                 </View>
