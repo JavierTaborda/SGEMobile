@@ -2,14 +2,15 @@ import { safeHaptic } from '@/utils/safeHaptics';
 import { useRefreshControl } from '@/utils/userRefreshControl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { groupAuthorizedPays } from '../helpers/groupAuthorizedPays';
+import { MethodPay } from '../interfaces/MethodPay';
 import { PlanPagos } from '../interfaces/PlanPagos';
 import { getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
-import { MethodPay } from '../types/MethodPay';
 
 export function useAuthPays(searchText: string) {
   const [pays, setPays] = useState<PlanPagos[]>([]);
   const [methods, setMethods] = useState<MethodPay[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
 
   const { refreshing, canRefresh, cooldown, wrapRefresh, cleanup } = useRefreshControl(15);
@@ -97,6 +98,7 @@ export function useAuthPays(searchText: string) {
     },
     []
   );
+
   const authorizedData = useMemo(() => {
     return groupAuthorizedPays(
       filteredPays.filter((d) => d.autorizadopagar === 1)
@@ -153,12 +155,18 @@ export function useAuthPays(searchText: string) {
   const handleAuthorize = useCallback(() => {
     setAuthSelectModalVisible(true);
   }, []);
+const udapteDocuments = async (documents: PlanPagos[]) => {
 
-  const udapteDocuments = async (documents: PlanPagos[]) => {
-    applyAuthorizationUpdate(documents);
-    setAuthSelectModalVisible(false);
+
+  applyAuthorizationUpdate(documents);
+  setAuthSelectModalVisible(false);
+
+  requestAnimationFrame(() => {
     exitSelectionMode();
-  };
+  });
+ 
+};
+
 
   return {
     pays,
@@ -190,6 +198,7 @@ export function useAuthPays(searchText: string) {
     headerTitle,
     handleAuthorize,
     udapteDocuments,
-    toggleSelect
+    toggleSelect,
+
   };
 }

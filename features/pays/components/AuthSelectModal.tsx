@@ -22,7 +22,7 @@ import { totalVenezuela } from "@/utils/moneyFormat";
 
 import { PlanPagos } from "../interfaces/PlanPagos";
 
-import { MethodPay } from "../types/MethodPay";
+import { MethodPay } from "../interfaces/MethodPay";
 
 interface Props {
   visible: boolean;
@@ -38,7 +38,10 @@ function buildAuthorizedItems(
   items: PlanPagos[],
   currency: string,
   rate: number,
-  customAmount?: number // optional override for single item
+  customAmount?: number, // optional override for single item
+  methods?: MethodPay, 
+
+
 ) {
   return items.map((item, index) => {
     let montoautorizado =
@@ -57,42 +60,99 @@ function buildAuthorizedItems(
       tasaautorizada: rate,
       montoautorizado,
       autorizadopagar: 1,
+      metodopago: methods?.textList ,
+      empresapagadora: methods?.empresapagadora,
+      bancopagador:methods?.bancopago ?? "",
+
+      //TODO: check is it needed
+      planpagonumero: 0,
+      autorizadonumero: 0,
+      codigobanco: null,
+      codigoswift: null,
+      fechaautorizadopor: null,
+      autorizadopor: null,
+      pagado: 0,
+      fechapagado: null,
+      codigounico: 0,
+      generadotxt: 0,
+      enviadocajachica: 0,
+      conciliadopago: 0,
+      cob_num: 0,
+      moneda_pago: null,
+      monto_pago: 0,
+      cantidadSKU: null,
+      unidades: null,
+      origen: null,
+      numeroPOOdoo: null,
+      linkseleccion: null,
+      categoria: null,
+      temporada: null,
+      estatuscompras: null,
+      fechacompras: null,
+      estatuslogistico: null,
+      fechalogistico: null,
     };
   });
 }
 
-function useAuthPayRules(
-  items: PlanPagos[],
-  methods: MethodPay[],
-  formaPago: string
-) {
-  return useMemo(() => {
-    let hasUSD = false;
-    let hasVED = false;
-    let isAuth = false;
-    let fallbackCurrency: string | undefined;
+  
+  function useAuthPayRules(
+    items: PlanPagos[],
+    methods: MethodPay[],
+    formaPago: string
+  ) {
+    return useMemo(() => {
+      let hasUSD = false;
+      let hasVED = false;
+      let isAuth = false;
+      let fallbackCurrency: string | undefined;
 
-    for (const i of items) {
-      if (i.moneda === "USD") hasUSD = true;
-      if (i.moneda === "VED") hasVED = true;
-      if (i.autorizadopagar === 1) isAuth = true;
-      if (!fallbackCurrency && i.moneda) fallbackCurrency = i.moneda;
-    }
+      for (const i of items) {
+        if (i.moneda === "USD") hasUSD = true;
+        if (i.moneda === "VED") hasVED = true;
+        if (i.autorizadopagar === 1) isAuth = true;
+        if (!fallbackCurrency && i.moneda) fallbackCurrency = i.moneda;
+      }
 
-    const currentMethod = methods.find(
-      (m) => String(m.codigounico) === formaPago
-    );
-    const targetCurrency =
-      currentMethod?.monedapago ?? fallbackCurrency ?? "VED";
+      const currentMethod = methods.find(
+        (m) => String(m.codigounico) === formaPago
+      );
+      
+      const targetCurrency =
+        currentMethod?.monedapago ?? fallbackCurrency ?? "VED";
 
-    const requiresRate = !(
-      (targetCurrency === "USD" && hasUSD && !hasVED) ||
-      (targetCurrency === "VED" && hasVED && !hasUSD)
-    );
+      const requiresRate = !(
+        (targetCurrency === "USD" && hasUSD && !hasVED) ||
+        (targetCurrency === "VED" && hasVED && !hasUSD)
+      );
 
-    return { targetCurrency, requiresRate, isAuth };
-  }, [items, methods, formaPago]);
-}
+      return { targetCurrency, requiresRate, isAuth, currentMethod };
+    }, [items, methods, formaPago]);
+  }
+
+/* ----------------------- COMPONENT ----------------------- */
+
+export default function AuthPayModal({
+  visible,
+  onClose,
+  items,
+  methods,
+  onAuthorize,
+}: Props) {
+  const [formaPago, setFormaPago] = useState("");
+  const [tasa, setTasa] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const [methodsSelected, setMethodsSelected] = useState<MethodPay | undefined>(undefined);
+  const [customAuthorizedAmount, setCustomAuthorizedAmount] =
+    useState<string>("");
+
+  const showSingleItemAmountInput = items.length === 1;
+
+  const overlay = useOverlayStore();
+  const expandAnim = useSharedValue(0);
+
 
 function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
   return useMemo(() => {
@@ -116,32 +176,11 @@ function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
   }, [items, tasa, currency]);
 }
 
-/* ----------------------- COMPONENT ----------------------- */
-
-export default function AuthPayModal({
-  visible,
-  onClose,
-  items,
-  methods,
-  onAuthorize,
-}: Props) {
-  const [formaPago, setFormaPago] = useState("");
-  const [tasa, setTasa] = useState(1);
-  const [expanded, setExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showErrors, setShowErrors] = useState(false);
-  const [customAuthorizedAmount, setCustomAuthorizedAmount] =
-    useState<string>("");
-
-  const showSingleItemAmountInput = items.length === 1;
-
-  const overlay = useOverlayStore();
-  const expandAnim = useSharedValue(0);
-
-  const { targetCurrency, requiresRate, isAuth } = useAuthPayRules(
+  const { targetCurrency, requiresRate, isAuth,  } = useAuthPayRules(
     items,
     methods,
     formaPago
+
   );
   const totals = useAuthPayTotals(items, tasa, targetCurrency);
 
@@ -209,8 +248,11 @@ export default function AuthPayModal({
         items,
         targetCurrency!,
         tasa,
-        customAmount
+        customAmount,
+        methodsSelected
+       
       );
+      //console.log(itemsAuthorized)
 
       const total = itemsAuthorized.reduce(
         (a, i) => a + Number(i.montoautorizado),
@@ -253,6 +295,12 @@ export default function AuthPayModal({
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
           <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
             Autorización de pagos
+          </Text>
+          <Text className="text-sm font-semibold mt-1 text-foreground dark:text-dark-foreground">
+            {items[0].beneficiario}
+          </Text>
+          <Text className="text-sm mt-1 text-foreground dark:text-dark-foreground">
+            {items[0].observacion} 
           </Text>
           <Text className="text-sm mt-1 text-foreground dark:text-dark-foreground">
             {items.length} documento{items.length > 1 ? "s" : ""}

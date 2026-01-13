@@ -49,7 +49,7 @@ export default function CustomPicker({
       setTimeout(() => {
         setFocused(false);
         setIosModalVisible(false);
-      }, 150);
+      }, 250);
     }
   };
 

@@ -4,7 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withTiming
 } from "react-native-reanimated";
 
 import { dateMonthText } from "@/utils/datesFormat";
@@ -24,7 +24,7 @@ interface Props {
   onLongPress?: () => void;
 }
 
-export default function AuthPayCard({
+export default function AuthPayCard ({
   item,
   selected = false,
   selectionMode = false,
@@ -41,19 +41,17 @@ export default function AuthPayCard({
   const cardScale = useSharedValue(1);
 
   /* Effecs to show /hide checkbox*/
-  useEffect(() => {
-    if (selectionMode) {
-      checkboxTranslateX.value = withTiming(0, { duration: 300 });
-      checkboxOpacity.value = withTiming(1, { duration: 150 });
-    } else {
-      checkboxTranslateX.value = withTiming(-12, { duration: 250 });
-      checkboxOpacity.value = withTiming(0, { duration: 100 });
-    }
-  }, [selectionMode]);
+useEffect(() => {
+  if (selectionMode) {
+    checkboxTranslateX.value = withTiming(0, { duration: 200 });
+    checkboxOpacity.value = withTiming(1, { duration: 140 });
+  } else {
+   
+    checkboxTranslateX.value = withTiming(-12, { duration: 140 });
+    checkboxOpacity.value = withTiming(0, { duration: 100 });
+  }
+}, [selectionMode]);
 
-  useEffect(() => {
-    cardScale.value = withTiming(selected ? 0.98 : 1, { duration: 150 });
-  }, [selected]);
 
   /* ANIMATED STYLES*/
   const checkboxStyle = useAnimatedStyle(() => ({
@@ -61,9 +59,7 @@ export default function AuthPayCard({
     transform: [{ translateX: checkboxTranslateX.value }],
   }));
 
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: cardScale.value }],
-  }));
+ 
 
   /* HANDLERS*/
   const handlePress = () => { 
@@ -75,7 +71,7 @@ export default function AuthPayCard({
   };
 
   return (
-    <Animated.View style={cardStyle}>
+    <Animated.View >
       <Pressable
         onPress={handlePress}
         onLongPress={onLongPress}

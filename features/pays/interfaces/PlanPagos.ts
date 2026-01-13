@@ -46,13 +46,13 @@ export interface PlanPagos  {
     montoautorizado?: number | null;
     monedaautorizada?: string | null;
     empresapagadora?: string | null;
-    pagado: boolean;
+    pagado: number;
     fechapagado?: Date | null;
     bancopagador: string;
     codigounico: number;
-    generadotxt: boolean;
-    enviadocajachica: boolean;
-    conciliadopago: boolean;
+    generadotxt: number;
+    enviadocajachica: number;
+    conciliadopago: number;
     cob_num: number;
     moneda_pago?: string | null;
     monto_pago: number;

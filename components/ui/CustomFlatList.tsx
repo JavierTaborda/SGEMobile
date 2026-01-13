@@ -182,7 +182,7 @@ function CustomFlatList<T>({
         initialNumToRender={10}
         windowSize={5}
         maxToRenderPerBatch={10}
-        removeClippedSubviews
+        removeClippedSubviews={false}
       />
     </>
   );

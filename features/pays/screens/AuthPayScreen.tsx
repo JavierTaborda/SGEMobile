@@ -1,6 +1,12 @@
 import { Entypo, MaterialCommunityIcons, Octicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Dimensions, Text, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import PagerView from "react-native-pager-view";
 import Animated, {
   useAnimatedStyle,
@@ -68,8 +74,6 @@ export default function AuthorizationScreen() {
 
   } = useAuthPays(searchText);
 
-
-
   /* HEADER ANIMATION */
   const headerScale = useSharedValue(1);
 
@@ -103,8 +107,6 @@ export default function AuthorizationScreen() {
     opacity: ctaOpacity.value,
   }));
 
-
-
   const renderItem = useCallback(
     ({ item }: { item: PlanPagos }) => {
       const id = String(item.numerodocumento);
@@ -125,7 +127,6 @@ export default function AuthorizationScreen() {
     },
     [selectionMode, selectedIds, toggleSelect]
   );
-
 
   if (loading) return <AuthPaySkeleton />;
   if (error) return <ErrorView error={error} getData={handleRefresh} />;
@@ -234,20 +235,23 @@ export default function AuthorizationScreen() {
             </Animated.View>
 
             {/* LIST */}
-            <CustomFlatList
-              data={filteredPays}
-              keyExtractor={(item) => String(item.numerodocumento)}
-              refreshing={refreshing}
-              canRefresh={canRefresh}
-              handleRefresh={handleRefresh}
-              cooldown={cooldown}
-              showtitle
-              title="Total autorizado"
-              subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
-                totalAutorizadoUSD
-              )} $`}
-              renderItem={renderItem}
-            />
+
+           
+              <CustomFlatList
+                data={filteredPays}
+                keyExtractor={(item) => `pay-${item.numerodocumento}`}
+                refreshing={refreshing}
+                canRefresh={canRefresh}
+                handleRefresh={handleRefresh}
+                cooldown={cooldown}
+                showtitle
+                title="Total autorizado"
+                subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
+                  totalAutorizadoUSD
+                )} $`}
+                renderItem={renderItem}
+              />
+            
           </View>
 
           <View key="2">
@@ -266,7 +270,7 @@ export default function AuthorizationScreen() {
 
                 <View>
                   <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
-                    {totalDocumentsAuth} pagos autorizados
+                    {totalDocumentsAuth} documentos autorizados
                   </Text>
                 </View>
               </View>
@@ -274,15 +278,37 @@ export default function AuthorizationScreen() {
 
             <View className=" mx-4 mt-2 mb-2 rounded-2xl px-2 py-3 items-center  bg-componentbg dark:bg-dark-componentbg">
               <Text className="text-foreground dark:text-dark-foreground font-semibold ">
-                {totalVenezuela(totalAutorizadoVED)} VED / 
-                {" "}{totalVenezuela(totalAutorizadoUSD)} $
+                {totalVenezuela(totalAutorizadoVED)} VED /{" "}
+                {totalVenezuela(totalAutorizadoUSD)} $
               </Text>
             </View>
 
             {totalDocumentsAuth > 0 ? (
-              <AuthorizedGroupedList data={authorizedData} />
+              <>
+                <AuthorizedGroupedList data={authorizedData} />
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 100,
+                    alignSelf: "center",
+                    width: "80%",
+                  }}
+                >
+                  <Pressable
+                    disabled={totalDocumentsAuth < 1}
+                    onPress={handleAuthorize}
+                    className={`py-4 rounded-3xl items-center bg-primary dark:bg-dark-primary`}
+                  >
+                    <Text className="text-white font-bold text-xl">
+                      Crear planificación
+                    </Text>
+                  </Pressable>
+                </View>
+              </>
             ) : (
-              <Text className="text-foreground dark:text-dark-foreground text-center pt-2 font-semibold">Sin documentos autorizados.</Text>
+              <Text className="text-foreground dark:text-dark-foreground text-center pt-2 font-semibold">
+                Sin documentos autorizados.
+              </Text>
             )}
           </View>
         </PagerView>
@@ -300,7 +326,7 @@ export default function AuthorizationScreen() {
           floatingStyle,
         ]}
       >
-        <TouchableOpacity
+        <Pressable
           disabled={selectedIds.size === 0}
           onPress={handleAuthorize}
           className={`
@@ -315,7 +341,7 @@ export default function AuthorizationScreen() {
           <Text className="text-white font-bold text-xl">
             Autorizar pagos ({selectedIds.size})
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </Animated.View>
 
       {/* MODALS */}
