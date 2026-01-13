@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   FlatList,
   ScrollView,
   Text,
@@ -20,16 +21,15 @@ import BottomModal from "@/components/ui/BottomModal";
 import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import { totalVenezuela } from "@/utils/moneyFormat";
 
-import { PlanPagos } from "../interfaces/PlanPagos";
-
-import { MethodPay } from "../interfaces/MethodPay";
+import type { MethodPay } from "../interfaces/MethodPay";
+import type { PlanPagos } from "../interfaces/PlanPagos";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   items: PlanPagos[];
   methods: MethodPay[];
-  onAuthorize: (authorizedItems: PlanPagos[]) => Promise<void>; // 👈
+  onAuthorize: (authorizedItems: PlanPagos[]) => Promise<void>;
 }
 
 /* ----------------------- HELPERS ----------------------- */
@@ -38,18 +38,16 @@ function buildAuthorizedItems(
   items: PlanPagos[],
   currency: string,
   rate: number,
-  customAmount?: number, // optional override for single item
-  methods?: MethodPay, 
-
-
-) {
+  customAmount?: number,
+  selectedMethod?: MethodPay
+): PlanPagos[] {
   return items.map((item, index) => {
     let montoautorizado =
       currency === "USD"
         ? Number(item.montosaldo) / (item.moneda === "USD" ? 1 : rate)
         : Number(item.montosaldo) * (item.moneda === "USD" ? rate : 1);
 
-    // Override only the first item if custom amount provided
+    // Override only first item if custom amount is provided
     if (index === 0 && customAmount !== undefined) {
       montoautorizado = customAmount;
     }
@@ -60,11 +58,11 @@ function buildAuthorizedItems(
       tasaautorizada: rate,
       montoautorizado,
       autorizadopagar: 1,
-      metodopago: methods?.textList ,
-      empresapagadora: methods?.empresapagadora,
-      bancopagador:methods?.bancopago ?? "",
+      metodopago: selectedMethod?.textList ?? "",
+      empresapagadora: selectedMethod?.empresapagadora ?? "",
+      bancopagador: selectedMethod?.bancopago ?? "",
 
-      //TODO: check is it needed
+      // Default/zero values (as per your original)
       planpagonumero: 0,
       autorizadonumero: 0,
       codigobanco: null,
@@ -95,42 +93,44 @@ function buildAuthorizedItems(
   });
 }
 
-  
-  function useAuthPayRules(
-    items: PlanPagos[],
-    methods: MethodPay[],
-    formaPago: string
-  ) {
-    return useMemo(() => {
-      let hasUSD = false;
-      let hasVED = false;
-      let isAuth = false;
-      let fallbackCurrency: string | undefined;
+function useAuthPayRules(
+  items: PlanPagos[],
+  methods: MethodPay[],
+  formaPago: string
+) {
+  return useMemo(() => {
+    let hasUSD = false;
+    let hasVED = false;
+    let fallbackCurrency: string | undefined;
 
-      for (const i of items) {
-        if (i.moneda === "USD") hasUSD = true;
-        if (i.moneda === "VED") hasVED = true;
-        if (i.autorizadopagar === 1) isAuth = true;
-        if (!fallbackCurrency && i.moneda) fallbackCurrency = i.moneda;
-      }
+    for (const item of items) {
+      if (item.moneda === "USD") hasUSD = true;
+      if (item.moneda === "VED") hasVED = true;
+      if (!fallbackCurrency && item.moneda) fallbackCurrency = item.moneda;
+    }
 
-      const currentMethod = methods.find(
-        (m) => String(m.codigounico) === formaPago
-      );
-      
-      const targetCurrency =
-        currentMethod?.monedapago ?? fallbackCurrency ?? "VED";
+    const currentMethod = methods.find(
+      (m) => String(m.codigounico) === formaPago
+    );
 
-      const requiresRate = !(
-        (targetCurrency === "USD" && hasUSD && !hasVED) ||
-        (targetCurrency === "VED" && hasVED && !hasUSD)
-      );
+    const targetCurrency =
+      currentMethod?.monedapago ?? fallbackCurrency ?? "VED";
 
-      return { targetCurrency, requiresRate, isAuth, currentMethod };
-    }, [items, methods, formaPago]);
-  }
+    const requiresRate = !(
+      (targetCurrency === "USD" && hasUSD && !hasVED) ||
+      (targetCurrency === "VED" && hasVED && !hasUSD)
+    );
 
-/* ----------------------- COMPONENT ----------------------- */
+    return {
+      targetCurrency,
+      requiresRate,
+      currentMethod,
+      hasAlreadyAuthorized: items.some((i) => i.autorizadopagar === 1),
+    };
+  }, [items, methods, formaPago]);
+}
+
+/* ----------------------- MAIN COMPONENT ----------------------- */
 
 export default function AuthPayModal({
   visible,
@@ -140,30 +140,30 @@ export default function AuthPayModal({
   onAuthorize,
 }: Props) {
   const [formaPago, setFormaPago] = useState("");
-  const [tasa, setTasa] = useState(1);
+  const [tasa, setTasa] = useState<number>(0);
+  const [customAuthorizedAmountRaw, setCustomAuthorizedAmountRaw] =
+    useState("");
   const [expanded, setExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-  const [methodsSelected, setMethodsSelected] = useState<MethodPay | undefined>(undefined);
-  const [customAuthorizedAmount, setCustomAuthorizedAmount] =
-    useState<string>("");
-
-  const showSingleItemAmountInput = items.length === 1;
 
   const overlay = useOverlayStore();
   const expandAnim = useSharedValue(0);
 
+  const showSingleItemAmountInput = items.length === 1;
 
-function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
-  return useMemo(() => {
+  const { targetCurrency, requiresRate, currentMethod, hasAlreadyAuthorized } =
+    useAuthPayRules(items, methods, formaPago);
+
+  const totals = useMemo(() => {
     if (tasa <= 0) return { ved: 0, usd: 0, totalFinal: 0 };
 
     let ved = 0;
     let usd = 0;
 
-    for (const i of items) {
-      const monto = Number(i.montosaldo);
-      if (i.moneda === "VED") {
+    for (const item of items) {
+      const monto = Number(item.montosaldo);
+      if (item.moneda === "VED") {
         ved += monto;
         usd += monto / tasa;
       } else {
@@ -172,105 +172,148 @@ function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
       }
     }
 
-    return { ved, usd, totalFinal: currency === "USD" ? usd : ved };
-  }, [items, tasa, currency]);
-}
+    return {
+      ved,
+      usd,
+      totalFinal: targetCurrency === "USD" ? usd : ved,
+    };
+  }, [items, tasa, targetCurrency]);
 
-  const { targetCurrency, requiresRate, isAuth,  } = useAuthPayRules(
-    items,
-    methods,
-    formaPago
-
-  );
-  const totals = useAuthPayTotals(items, tasa, targetCurrency);
-
-  const isValid = !!formaPago && (!requiresRate || tasa > 0);
-
-  // Suggested amount in target currency for single item
+  //Calculate suggested amount
   const suggestedAmount = useMemo(() => {
     if (!showSingleItemAmountInput || !items[0]) return "";
 
     const originalAmount = Number(items[0].montosaldo);
     const originalCurrency = items[0].moneda;
 
-    if (originalCurrency === targetCurrency) return String(originalAmount);
+    if (originalCurrency === targetCurrency) return originalAmount.toFixed(2);
 
     return targetCurrency === "USD"
       ? (originalAmount / tasa).toFixed(2)
       : (originalAmount * tasa).toFixed(2);
   }, [items, targetCurrency, tasa, showSingleItemAmountInput]);
 
-  useEffect(() => {
-    setCustomAuthorizedAmount(suggestedAmount);
-  }, [suggestedAmount]);
+//Check the amount
+  const maxAllowedAmount = useMemo(() => {
+    if (!showSingleItemAmountInput || !items[0] || tasa <= 0) return undefined;
+
+    const original = Number(items[0].montosaldo);
+
+    if (items[0].moneda === targetCurrency) {
+      return original;
+    }
+
+    return targetCurrency === "USD" ? original / tasa : original * tasa;
+  }, [items, tasa, targetCurrency, showSingleItemAmountInput]);
+
+
+
+  const isValid = !!formaPago && (!requiresRate || tasa > 0);
+
+  // Auto-sync initial values when modal becomes visible
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    expandAnim.value = withTiming(expanded ? 1 : 0, { duration: 250 });
-  }, [expanded]);
+    if (!visible) {
+      initializedRef.current = false;
+      return;
+    }
 
-  useEffect(() => {
-    if (!visible) return;
+    if (initializedRef.current) return;
+    initializedRef.current = true;
 
-    // Initialize tasa based on first item's rate if available
     const initialRateItem = items.find((i) => i.tasacambio);
     const initialRate = initialRateItem
       ? Number(initialRateItem.tasacambio)
-      : 0.0; // Default fallback rate
+      : 0;
 
-    setFormaPago("");
     setTasa(initialRate);
-    setCustomAuthorizedAmount("");
+    setCustomAuthorizedAmountRaw("");
     setExpanded(false);
     setShowErrors(false);
     setIsLoading(false);
-  }, [visible]);
+  }, [visible, items]);
+
+  useEffect(() => {
+    if (!showSingleItemAmountInput || !tasa) return;
+    setCustomAuthorizedAmountRaw(suggestedAmount);
+  }, [tasa, suggestedAmount, showSingleItemAmountInput]);
+
+  // Animation
+  useEffect(() => {
+    expandAnim.value = withTiming(expanded ? 1 : 0, { duration: 250 });
+  }, [expanded, expandAnim]);
 
   const expandStyle = useAnimatedStyle(() => ({
     height: expandAnim.value === 0 ? 0 : "auto",
     opacity: expandAnim.value,
-    transform: [{ scale: 0.98 + expandAnim.value * 0.02 }],
+    overflow: "hidden" as const,
   }));
+
+  const handleCustomAmountChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9.]/g, "");
+    const parts = cleaned.split(".");
+    if (parts.length > 2) return; // more than one dot
+    if (parts[1]?.length > 2) return; // max 2 decimals
+
+    setCustomAuthorizedAmountRaw(cleaned);
+  };
+
+  const customAmountNumber = useMemo(() => {
+    const num = Number(customAuthorizedAmountRaw);
+    return isNaN(num) ? undefined : num;
+  }, [customAuthorizedAmountRaw]);
+
+  const exceedsAllowedAmount =
+    customAmountNumber !== undefined &&
+    maxAllowedAmount !== undefined &&
+    customAmountNumber > maxAllowedAmount;
 
   const handleAuthorize = useCallback(async () => {
     if (!isValid) {
       setShowErrors(true);
       return;
     }
+    
+    if (exceedsAllowedAmount) {
+     
+        Alert.alert(
+          "Monto excedido",
+          `El monto autorizado no debe exceder ${totalVenezuela(
+            maxAllowedAmount!
+          )} ${targetCurrency}.`
+        );
+        return;
+    }
+
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-
-      const customAmount = customAuthorizedAmount
-        ? Number(customAuthorizedAmount)
-        : undefined;
-
-      const itemsAuthorized = buildAuthorizedItems(
+      const authorizedItems = buildAuthorizedItems(
         items,
-        targetCurrency!,
+        targetCurrency,
         tasa,
-        customAmount,
-        methodsSelected
-       
+        customAmountNumber,
+        currentMethod
       );
-      //console.log(itemsAuthorized)
 
-      const total = itemsAuthorized.reduce(
-        (a, i) => a + Number(i.montoautorizado),
+      const totalAuthorized = authorizedItems.reduce(
+        (sum, item) => sum + Number(item.montoautorizado),
         0
       );
 
-      await onAuthorize(itemsAuthorized);
+      await onAuthorize(authorizedItems);
 
       overlay.show("success", {
         title: "Pagos autorizados",
-        subtitle: `${items.length} documento${items.length > 1 ? "s" : ""} por ${totalVenezuela(total)} ${targetCurrency}`,
+        subtitle: `${items.length} documento${items.length !== 1 ? "s" : ""} por ${totalVenezuela(totalAuthorized)} ${targetCurrency}`,
       });
 
       onClose();
     } catch (error) {
       overlay.show("error", {
-        title: "Error al autoriz  ar",
-        subtitle: error instanceof Error ? error.message : String(error),
+        title: "Error al autorizar",
+        subtitle: error instanceof Error ? error.message : "Error desconocido",
       });
     } finally {
       setIsLoading(false);
@@ -278,9 +321,10 @@ function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
   }, [
     isValid,
     items,
-    tasa,
     targetCurrency,
-    customAuthorizedAmount,
+    tasa,
+    customAmountNumber,
+    currentMethod,
     onAuthorize,
     onClose,
     overlay,
@@ -290,52 +334,49 @@ function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
 
   return (
     <BottomModal visible={visible} onClose={onClose} heightPercentage={0.85}>
-      <ScrollView keyboardShouldPersistTaps="handled" className="pb-4 mb-4">
+      <ScrollView keyboardShouldPersistTaps="handled" className="pb-6">
         {/* Header */}
-        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
-          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-3">
+          <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
             Autorización de pagos
           </Text>
-          <Text className="text-sm font-semibold mt-1 text-foreground dark:text-dark-foreground">
-            {items[0].beneficiario}
+          <Text className="text-base font-medium mt-1 text-foreground dark:text-dark-foreground">
+            {items[0]?.beneficiario ?? "—"}
           </Text>
-          <Text className="text-sm mt-1 text-foreground dark:text-dark-foreground">
-            {items[0].observacion} 
-          </Text>
-          <Text className="text-sm mt-1 text-foreground dark:text-dark-foreground">
-            {items.length} documento{items.length > 1 ? "s" : ""}
+          {items[0]?.observacion && (
+            <Text className="text-sm mt-1 text-mutedForeground dark:text-dark-mutedForeground">
+              {items[0].observacion}
+            </Text>
+          )}
+          <Text className="text-sm mt-1 text-mutedForeground dark:text-dark-mutedForeground">
+            {items.length} documento{items.length !== 1 ? "s" : ""}
           </Text>
         </View>
 
-        {/* Total */}
-        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-3">
+        {/* Total to authorize */}
+        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-3">
           <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
             Monto a autorizar
           </Text>
-          <Text className="text-xl font-extrabold text-primary dark:text-dark-primary">
+          <Text className="text-2xl font-extrabold  text-primary dark:text-dark-primary">
             {totalVenezuela(totals.totalFinal)} {targetCurrency}
           </Text>
 
-          {/* Dual currency estimate */}
           {requiresRate && tasa > 0 && (
-            <View className="mt-1 flex-row justify-start">
-              <Text className="text-xs text-mutedForeground dark:text-dark-mutedForeground">
-                ≈{" "}
-                <Text className="font-semibold text-primary dark:text-dark-primary">
-                  {totalVenezuela(
-                    targetCurrency === "USD" ? totals.ved : totals.usd
-                  )}{" "}
-                  {targetCurrency === "USD" ? "VED" : "USD"}
-                </Text>
-              </Text>
-            </View>
+            <Text className="text-sm  text-mutedForeground dark:text-dark-mutedForeground">
+              ≈{" "}
+              {totalVenezuela(
+                targetCurrency === "USD" ? totals.ved : totals.usd
+              )}{" "}
+              {targetCurrency === "USD" ? "VED" : "USD"}
+            </Text>
           )}
         </View>
 
         {/* Form */}
-        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4 gap-4">
+        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-3 gap-y-2">
           <View>
-            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground pb-1">
+            <Text className="text-lg font-bold mb-1 text-foreground dark:text-dark-foreground">
               Forma de pago
             </Text>
             <CustomPicker
@@ -346,71 +387,70 @@ function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
                 value: String(m.codigounico),
               }))}
               placeholder="Seleccione método de pago"
-              error={
-                showErrors && !formaPago
-                  ? "Seleccione un método de pago"
-                  : undefined
-              }
+              error={showErrors && !formaPago ? "Campo requerido" : undefined}
             />
           </View>
-          {requiresRate && (
-            <>
-              <View>
-                <View className="flex-row gap-2 items-center">
-                  <Text className="text-lg font-bold text-foreground dark:text-dark-foreground ">
-                    Tasa autorizada
-                  </Text>
 
-                  <Text className="text-xs text-primary dark:text-dark-primary font-medium">
-                    (Requerida)
-                  </Text>
-                </View>
-                <RateInput value={tasa} onChangeValue={setTasa} />
-              </View>
-            </>
+          {requiresRate && (
+            <View>
+              <Text className="text-lg font-bold mb-1 text-foreground dark:text-dark-foreground">
+                Tasa autorizada{" "}
+                <Text className="text-primary dark:text-dark-primary">
+                  (requerida)
+                </Text>
+              </Text>
+              <RateInput value={tasa} onChangeValue={setTasa} />
+            </View>
           )}
 
           {showSingleItemAmountInput && requiresRate && (
             <View>
-              <Text className="text-lg font-bold text-foreground dark:text-dark-foreground ">
+              <Text className="text-lg font-bold mb-1 text-foreground dark:text-dark-foreground">
                 Monto autorizado
               </Text>
               <CustomTextInput
-                value={
-                  customAuthorizedAmount
-                    ? totalVenezuela(customAuthorizedAmount)
-                    : ""
-                }
-                onChangeText={setCustomAuthorizedAmount}
-                placeholder={totalVenezuela(suggestedAmount) || "Ingrese monto"}
+                value={customAuthorizedAmountRaw}
+                onChangeText={handleCustomAmountChange}
+                placeholder={suggestedAmount || "0.00"}
                 keyboardType="numeric"
               />
+              {suggestedAmount &&
+                customAuthorizedAmountRaw !== suggestedAmount && (
+                  <Text className="text-xs mt-1 text-mutedForeground">
+                    Sugerido: {totalVenezuela(Number(suggestedAmount))}
+                  </Text>
+                )}
             </View>
           )}
         </View>
 
-        {/* Details */}
-        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mt-4">
+        {/* Items detail */}
+        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
           <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
-            <Text className="text-primary dark:text-dark-primary font-bold">
+            <Text className="text-primary dark:text-dark-primary font-bold text-base">
               {expanded ? "Ocultar detalle" : `Ver detalle (${items.length})`}
             </Text>
           </TouchableOpacity>
 
-          <Animated.View style={expandStyle} className="overflow-hidden">
+          <Animated.View style={expandStyle}>
             <FlatList
               data={items}
-              keyExtractor={(i) => String(i.numerodocumento)}
+              keyExtractor={(item) => String(item.numerodocumento)}
               scrollEnabled={false}
+              ItemSeparatorComponent={() => (
+                <View className="h-px bg-border my-2" />
+              )}
               renderItem={({ item }) => (
-                <View className="py-3 border-b border-muted dark:border-dark-mutedForeground last:border-0">
-                  <Text className="font-semibold text-foreground dark:text-dark-foreground">
+                <View className="py-3">
+                  <Text className="font-medium text-foreground dark:text-dark-foreground">
                     {item.beneficiario}
                   </Text>
-                  <Text className="text-xs text-mutedForeground dark:text-dark-mutedForeground mt-1">
-                    {item.observacion}
-                  </Text>
-                  <Text className="text-sm text-right font-bold text-primary dark:text-dark-primary mt-2">
+                  {item.observacion && (
+                    <Text className="text-sm text-mutedForeground dark:text-dark-mutedForeground mt-0.5">
+                      {item.observacion}
+                    </Text>
+                  )}
+                  <Text className="text-right font-bold mt-2 text-primary dark:text-dark-primary">
                     {totalVenezuela(Number(item.montosaldo))} {item.moneda}
                   </Text>
                 </View>
@@ -420,25 +460,29 @@ function useAuthPayTotals(items: PlanPagos[], tasa: number, currency?: string) {
         </View>
       </ScrollView>
 
-      {/* Footer */}
-      <View className="pb-4 gap-3">
+      {/* Actions */}
+      <View className="pt-4 gap-y-3 ">
         <TouchableOpacity
-          className={`rounded-xl py-4 bg-primary dark:bg-dark-primary ${(!isValid || isLoading) && "opacity-50"}`}
+          className={`py-4 rounded-xl items-center ${
+            !isValid || isLoading
+              ? "bg-primary/50 dark:bg-dark-primary/50"
+              : "bg-primary dark:bg-dark-primary"
+          }`}
           disabled={!isValid || isLoading}
           onPress={handleAuthorize}
         >
-          <Text className="text-white text-center font-bold">
+          <Text className="text-white font-bold text-base">
             {isLoading ? "Procesando..." : `Autorizar (${items.length})`}
           </Text>
         </TouchableOpacity>
 
-        {isAuth && (
+        {hasAlreadyAuthorized && (
           <TouchableOpacity
-            className="rounded-xl py-4 border border-primary dark:border-dark-primary"
+            className="py-4 rounded-xl border border-primary dark:border-dark-primary items-center"
             onPress={onClose}
           >
-            <Text className="text-primary dark:text-dark-primary text-center font-bold">
-              Desautorizar
+            <Text className="text-primary dark:text-dark-primary font-bold">
+              Cancelar autorización
             </Text>
           </TouchableOpacity>
         )}
