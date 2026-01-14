@@ -19,7 +19,9 @@ export function useAuthPays(searchText: string) {
     tipoProveedor: [],
     company: [],
     unidad: [],
-    beneficiario: []
+    beneficiario: [],
+    currency:[],
+    status:[]
   })
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
     selectedClaseGasto: '',
@@ -27,6 +29,8 @@ export function useAuthPays(searchText: string) {
     selectedCompany: '',
     selectedUnidad: '',
     selectedBeneficiario: '',
+    selectedCurrency:'',
+    selectedStatus: '',
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -64,13 +68,34 @@ export function useAuthPays(searchText: string) {
         !selectedFilters.selectedBeneficiario ||
         item.beneficiario === selectedFilters.selectedBeneficiario;
 
+      const matchesCurrency =
+        !selectedFilters.selectedCurrency ||
+        item.moneda === selectedFilters.selectedCurrency;
+
+      const matchesStatus = ()=>{
+
+        switch (selectedFilters.selectedStatus) {
+          case "SIN AUTORIZAR":
+            return item.autorizadopagar === 0;
+          case "AUTORIZADOS":
+            return item.autorizadopagar === 1;
+          case "TODOS":
+          case "":
+          case null:
+            return true; 
+          default:
+            return true;
+        }
+      }
+
       return (
         matchesSearch &&
         matchesClaseGasto &&
         matchesTipoProveedor &&
         matchesCompany &&
         matchesUnidad &&
-        matchesBeneficiario
+        matchesBeneficiario &&
+        matchesCurrency && matchesStatus()
       );
     });
   }, [pays, searchText, selectedFilters]);
@@ -133,6 +158,8 @@ export function useAuthPays(searchText: string) {
         company: [...new Set(paysData.map((d) => d.empresa ?? ""))],
         unidad: [...new Set(paysData.map((d) => d.unidad ?? ""))],
         beneficiario: [...new Set(paysData.map((d) => d.beneficiario ?? ""))],
+        currency: [...new Set(paysData.map((d) => d.moneda ?? ""))],
+        status: ["SIN AUTORIZAR","AUTORIZADOS","TODOS"]
       });
 
 } catch (err) {

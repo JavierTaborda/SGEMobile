@@ -4,6 +4,8 @@ export type SelectedFilters = {
     selectedCompany: string;
     selectedUnidad: string;
     selectedBeneficiario: string;
+    selectedCurrency:string;
+    selectedStatus:string;
 }
 export type FilterData={
     claseGasto: string[];
@@ -11,4 +13,6 @@ export type FilterData={
     company:string[];
     unidad:string[];
     beneficiario:string[];
+    currency:string[];
+    status:string[] 
 }

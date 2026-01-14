@@ -39,6 +39,8 @@ export default function PayFilterModal({
       selectedCompany: "",
       selectedUnidad: "",
       selectedBeneficiario: "",
+      selectedCurrency:"",
+      selectedStatus:''
     });
 
   return (
@@ -58,6 +60,12 @@ export default function PayFilterModal({
           selectedValue={filters.selectedCompany}
           onSelect={(v) => setFilters({ ...filters, selectedCompany: v })}
         />
+        <ScrollSelect
+          label="Unidad"
+          options={filterData.unidad}
+          selectedValue={filters.selectedUnidad}
+          onSelect={(v) => setFilters({ ...filters, selectedUnidad: v })}
+        />
 
         <ScrollSelect
           label="Clase de gasto"
@@ -67,17 +75,23 @@ export default function PayFilterModal({
         />
 
         <ScrollSelect
+          label="Moneda"
+          options={filterData.currency}
+          selectedValue={filters.selectedCurrency}
+          onSelect={(v) => setFilters({ ...filters, selectedCurrency: v })}
+        />
+        <ScrollSelect
+          label="Estado autorización"
+          options={filterData.status}
+          selectedValue={filters.selectedStatus}
+          onSelect={(v) => setFilters({ ...filters, selectedStatus: v })}
+        />
+
+        <ScrollSelect
           label="Tipo de proveedor"
           options={filterData.tipoProveedor}
           selectedValue={filters.selectedTipoProveedor}
           onSelect={(v) => setFilters({ ...filters, selectedTipoProveedor: v })}
-        />
-
-        <ScrollSelect
-          label="Unidad"
-          options={filterData.unidad}
-          selectedValue={filters.selectedUnidad}
-          onSelect={(v) => setFilters({ ...filters, selectedUnidad: v })}
         />
 
         <Text className="font-medium text-mutedForeground dark:text-dark-mutedForeground pb-2">
