@@ -1,9 +1,10 @@
 import { useThemeStore } from "@/stores/useThemeStore";
 import { appTheme } from "@/utils/appTheme";
+import { safeHaptic } from "@/utils/safeHaptics";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useEffect } from "react";
-import { Modal, Text, TouchableOpacity, View } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -21,7 +22,6 @@ interface FilterModalProps {
   title?: string;
 }
 
-
 export default function FilterModal({
   visible,
   onClose,
@@ -35,22 +35,30 @@ export default function FilterModal({
   const translateY = useSharedValue(300);
   const opacity = useSharedValue(0);
 
-useEffect(() => {
-  translateY.value = withTiming(visible ? 0 : 300, {
-    duration: visible ? 300 : 250,
-    easing: Easing.out(Easing.exp),
-  });
-  opacity.value = withTiming(visible ? 1 : 0, {
-    duration: visible ? 300 : 250,
-  });
-}, [visible]);
-
+  useEffect(() => {
+    translateY.value = withTiming(visible ? 0 : 300, {
+      duration: visible ? 300 : 250,
+      easing: Easing.out(Easing.exp),
+    });
+    opacity.value = withTiming(visible ? 1 : 0, {
+      duration: visible ? 300 : 250,
+    });
+  }, [visible]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
 
+
+  const Clean = () => {
+    safeHaptic("light");
+    onClean();
+  };
+  const Apply = () => {
+    safeHaptic("success");
+    onApply();
+  };
 
   return (
     <Modal
@@ -64,9 +72,9 @@ useEffect(() => {
         tint="dark"
         style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
       >
-        <TouchableOpacity
+        <Pressable
           className="flex-1"
-          activeOpacity={1}
+          
           onPress={onClose}
         />
       </BlurView>
@@ -76,7 +84,6 @@ useEffect(() => {
           style={[
             animatedStyle,
             {
-
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
               padding: 4,
@@ -92,40 +99,39 @@ useEffect(() => {
             <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
               {title}
             </Text>
-            <TouchableOpacity onPress={onClose}>
+            <Pressable onPress={onClose}>
               <Ionicons
                 name="close"
                 size={24}
                 color={appTheme.mutedForeground}
               />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {children}
 
           {/* Buttons */}
-          <View className="flex-row gap-3 mt-1 pb-1">
-            <TouchableOpacity
+          <View className="flex-row gap-3 mx-2 pb-2">
+            <Pressable
               className="flex-1 p-3 rounded-xl border border-muted"
-              onPress={onClean}
+              onPress={Clean}
             >
               <Text className="text-center text-foreground dark:text-dark-foreground font-semibold">
                 Limpiar
               </Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               className="flex-1 p-3 rounded-xl bg-primary dark:bg-dark-primary"
-              onPress={onApply}
+              onPress={Apply}
             >
               <Text className="text-center text-white font-semibold">
                 Aplicar
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </Animated.View>
       </View>
     </Modal>
   );
 }
-

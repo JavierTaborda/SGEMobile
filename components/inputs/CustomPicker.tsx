@@ -8,6 +8,7 @@ import {
   Platform,
   Pressable,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -45,13 +46,21 @@ export default function CustomPicker({
     setTouched(true);
     onValueChange(value);
 
-    if (Platform.OS === "ios" && value) {
-      setTimeout(() => {
-        setFocused(false);
-        setIosModalVisible(false);
-      }, 250);
-    }
+    // if (Platform.OS === "ios" && value) {
+    //   setTimeout(() => {
+    //     setFocused(false);
+    //     setIosModalVisible(false);
+    //   }, 250);
+    // }
   };
+
+
+  // Nuevo estado para búsqueda
+  const [search, setSearch] = useState("");
+
+  const filteredItems = items.filter((item) =>
+    item.label.toLowerCase().includes(search.toLowerCase())
+  );
 
   const iconName = FontAwesome.glyphMap[icon] ? icon : "list";
 
@@ -203,7 +212,44 @@ export default function CustomPicker({
                 </TouchableOpacity>
               </View>
 
-              <View className="h-[280px] justify-center">
+              <View className="h-[320px] mx-2">
+                {/* search */}
+                <View
+                  className="flex-row items-center px-3 py-3 mt-1 mb-2 
+                 bg-componentbg dark:bg-dark-componentbg 
+                 rounded-2xl border border-gray-300 dark:border-gray-700"
+                >
+                  
+                  <FontAwesome
+                    name="search"
+                    size={18}
+                    color={theme === "dark" ? "#aaa" : "#555"}
+                    style={{ marginRight: 8 }}
+                  />
+
+                  {/* Input */}
+                  <TextInput
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder="Buscar..."
+                    className="flex-1 text-base text-foreground dark:text-dark-foreground"
+                    placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+                    clearButtonMode="never" 
+                  />
+
+                  {/* Botón limpiar */}
+                  {search.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearch("")}>
+                      <FontAwesome
+                        name="times-circle"
+                        size={18}
+                        color={theme === "dark" ? "#aaa" : "#555"}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Picker  items filtereds */}
                 <Picker
                   selectedValue={selectedValue}
                   onValueChange={handleValueChange}
@@ -215,7 +261,7 @@ export default function CustomPicker({
                   }}
                 >
                   <Picker.Item label={placeholder} value="" />
-                  {items.map((item) => (
+                  {filteredItems.map((item) => (
                     <Picker.Item
                       key={item.value}
                       label={item.label}

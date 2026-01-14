@@ -33,7 +33,6 @@ import { PlanPagos } from "../interfaces/PlanPagos";
 export default function AuthorizationScreen() {
   /* FILTERS / SEARCH*/
   const [searchText, setSearchText] = useState("");
-  const [company, setCompany] = useState("CYBERLUX");
   const [authorized, setAuthorized] = useState(false);
   const [currency, setCurrency] = useState("VED");
   const [tab, setTab] = useState<"pending" | "authorized">("pending");
@@ -71,7 +70,10 @@ export default function AuthorizationScreen() {
     headerTitle,
     handleAuthorize,
     udapteDocuments,
-
+   filterData,
+    selectedFilters,
+    setSelectedFilters,
+    appliedFiltersCount
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -82,6 +84,7 @@ export default function AuthorizationScreen() {
       duration: 200,
     });
   }, [selectionMode]);
+
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: headerScale.value }],
@@ -140,6 +143,7 @@ export default function AuthorizationScreen() {
         onFilterPress={() => setFilterModalVisible(true)}
         extrafilter={false}
         headerVisible={false}
+        filterCount={appliedFiltersCount}
       >
         <View className="flex-row justify-center mb-1 px-3 ">
           <View
@@ -236,22 +240,20 @@ export default function AuthorizationScreen() {
 
             {/* LIST */}
 
-           
-              <CustomFlatList
-                data={filteredPays}
-                keyExtractor={(item) => `pay-${item.numerodocumento}`}
-                refreshing={refreshing}
-                canRefresh={canRefresh}
-                handleRefresh={handleRefresh}
-                cooldown={cooldown}
-                showtitle
-                title="Total autorizado"
-                subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
-                  totalAutorizadoUSD
-                )} $`}
-                renderItem={renderItem}
-              />
-            
+            <CustomFlatList
+              data={filteredPays}
+              keyExtractor={(item) => `pay-${item.numerodocumento}`}
+              refreshing={refreshing}
+              canRefresh={canRefresh}
+              handleRefresh={handleRefresh}
+              cooldown={cooldown}
+              showtitle
+              title="Total autorizado"
+              subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
+                totalAutorizadoUSD
+              )} $`}
+              renderItem={renderItem}
+            />
           </View>
 
           <View key="2">
@@ -349,15 +351,11 @@ export default function AuthorizationScreen() {
         <FiltersModal
           visible={filterModalVisible}
           onClose={() => setFilterModalVisible(false)}
-          onApply={(company, currency, authorized) => {
-            setCompany(company);
-            setCurrency(currency);
-            setAuthorized(authorized);
-            setFilterModalVisible(false);
+          onApply={(filters) => {
+            setSelectedFilters(filters);
           }}
-          selectedCompany={company}
-          selectedCurrency={currency}
-          selectedAuthorized={authorized}
+          filterData={filterData}
+          selectedFilters={selectedFilters}
         />
       )}
 

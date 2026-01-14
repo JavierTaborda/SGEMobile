@@ -171,9 +171,12 @@ useEffect(() => {
             {/* Meta */}
             <View className="space-y-1">
               {isAuth && (
-                <Text className="text-sm  text-gray-500 dark:text-gray-400">
+                <Text
+                  numberOfLines={1}
+                  className="text-sm  text-gray-500 dark:text-gray-400 overflow-hidden"
+                >
                   Autorizado con{" "}
-                  <Text className="font-medium text-foreground dark:text-dark-foreground">
+                  <Text className="font-medium text-xs text-foreground dark:text-dark-foreground ">
                     {item.metodopago} {item.empresapagadora} {item.bancopagador}
                   </Text>
                 </Text>
@@ -188,15 +191,17 @@ useEffect(() => {
             </View>
 
             {/* Amounts */}
-            <View className="rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 gap-y-1 my-1">
-              <View className="flex-row justify-between">
+            <View
+              className={`rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 gap-y-1 my-1 `}
+            >
+              <View className={`flex-row justify-between `}>
                 <View>
                   <Text className="text-xs  text-gray-500 dark:text-gray-400">
                     Total saldo
                   </Text>
                   <Text className="text-lg font-semibold text-black dark:text-white">
                     {totalVenezuela(item.montoneto)}{" "}
-                    {item.moneda==="VED" ? 'VED' : currencyDollar}
+                    {item.moneda === "VED" ? "VED" : currencyDollar}
                   </Text>
                 </View>
 
@@ -257,8 +262,8 @@ useEffect(() => {
                 </View>
               )}
               <Text
-                numberOfLines={3}
-                className="text-xs  text-gray-500 dark:text-gray-400"
+                numberOfLines={2}
+                className="text-xs  text-gray-500 dark:text-gray-400 overflow-hidden"
               >
                 {item.observacion}
               </Text>

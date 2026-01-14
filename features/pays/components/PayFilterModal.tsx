@@ -1,87 +1,102 @@
+import CustomPicker from "@/components/inputs/CustomPicker";
 import FilterModal from "@/components/ui/FilterModal";
+import ScrollSelect from "@/components/ui/ScrollSelect";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
-import { ScrollView, Switch, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import { FilterData, SelectedFilters } from "../types/Filters";
 
 type FilterModalProps = {
-  onApply: (company: string, currency: string, authorized: boolean) => void;
+  onApply: (filters: SelectedFilters) => void;
   onClose: () => void;
   visible: boolean;
-  selectedCompany: string;
-  selectedCurrency: string;
-  selectedAuthorized: boolean;
-
+  filterData: FilterData;
+  selectedFilters: SelectedFilters;
 };
 
 export default function PayFilterModal({
   onApply,
   onClose,
   visible,
+  filterData,
+  selectedFilters,
 }: FilterModalProps) {
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
-  const [company, setCompany] = useState("CYBERLUX");
-  const [authorized, setAuthorized] = useState(false);
-  const [currency, setCurrency] = useState("VED");
+  const [filters, setFilters] = useState<SelectedFilters>(selectedFilters);
 
   const handleApply = () => {
-    onApply(company, currency, authorized);
+    console.log("Hola")
+    onApply(filters);
+    onClose()
   };
 
-  const handleClean = () => {
-    setCompany("");
-    setAuthorized(false);
-    setCurrency("VED");
-  };
+  const handleClean = () =>
+    setFilters({
+      selectedClaseGasto: "",
+      selectedTipoProveedor: "",
+      selectedCompany: "",
+      selectedUnidad: "",
+      selectedBeneficiario: "",
+    });
+
   return (
-        <FilterModal
-          visible={visible}
-          onClose={onClose}
-          onApply={handleApply}
-          onClean={handleClean}
-          title="Filtrar Metas de Venta"
-        >
-      <ScrollView showsVerticalScrollIndicator className="mb-6">
-        <Text
-          className={`text-center text-lg font-bold mb-4 text-foreground dark:text-dark-foreground`}
-        >
-          Filtros
+    <FilterModal
+      visible={visible}
+      onClose={onClose}
+      onApply={handleApply}
+      onClean={handleClean}
+      title="Filtrar Documentos"
+    >
+      <ScrollView showsVerticalScrollIndicator={false} className="px-2 mb-6">
+        {/* Header UX */}
+
+        <ScrollSelect
+          label="Empresa"
+          options={filterData.company}
+          selectedValue={filters.selectedCompany}
+          onSelect={(v) => setFilters({ ...filters, selectedCompany: v })}
+        />
+
+        <ScrollSelect
+          label="Clase de gasto"
+          options={filterData.claseGasto}
+          selectedValue={filters.selectedClaseGasto}
+          onSelect={(v) => setFilters({ ...filters, selectedClaseGasto: v })}
+        />
+
+        <ScrollSelect
+          label="Tipo de proveedor"
+          options={filterData.tipoProveedor}
+          selectedValue={filters.selectedTipoProveedor}
+          onSelect={(v) => setFilters({ ...filters, selectedTipoProveedor: v })}
+        />
+
+        <ScrollSelect
+          label="Unidad"
+          options={filterData.unidad}
+          selectedValue={filters.selectedUnidad}
+          onSelect={(v) => setFilters({ ...filters, selectedUnidad: v })}
+        />
+
+        <Text className="font-medium text-mutedForeground dark:text-dark-mutedForeground pb-2">
+          Beneficiario:
         </Text>
-        <Text className={`mb-2 text-foreground dark:text-dark-foreground`}>
-          Empresa:
-        </Text>
-        <View className="rounded mb-4 bg-componentbg dark:bg-dark-componentbg">
-          <Picker
-            selectedValue={company}
-            onValueChange={setCompany}
-            style={{ color: isDark ? "white" : "black" }}
-          >
-            <Picker.Item label="FRIGILUX" value="FRIGLUX" />
-            <Picker.Item label="CYBERLUX" value="CYBERLUX" />
-          </Picker>
+        <View className="rounded mb-4 mx-4">
+          <CustomPicker
+            selectedValue={filters.selectedBeneficiario}
+            onValueChange={(val: string) =>
+              setFilters({ ...filters, selectedBeneficiario: val })
+            }
+            items={filterData.beneficiario.map((m) => ({
+              label: m,
+              value: String(m),
+            }))}
+            placeholder="Seleccione un beneficiario"
+            error={undefined}
+          />
         </View>
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-foreground dark:text-dark-foreground">
-            Solo autorizados
-          </Text>
-          <Switch value={authorized} onValueChange={setAuthorized} />
-        </View>
-        <Text className="mb-2 text-foreground dark:text-dark-foreground">
-          Moneda:
-        </Text>
-        <View className="rounded mb-4  bg-componentbg dark:bg-dark-componentbg">
-          <Picker
-            selectedValue={currency}
-            onValueChange={setCurrency}
-            style={{ color: isDark ? "white" : "black" }}
-          >
-            <Picker.Item label="VED (Bolívares)" value="VED" />
-            <Picker.Item label="USD (Dólares)" value="USD" />
-          </Picker>
-        </View>
-       
       </ScrollView>
     </FilterModal>
   );
