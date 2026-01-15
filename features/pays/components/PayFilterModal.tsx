@@ -27,7 +27,7 @@ export default function PayFilterModal({
   const [filters, setFilters] = useState<SelectedFilters>(selectedFilters);
 
   const handleApply = () => {
-    console.log("Hola")
+  
     onApply(filters);
     onClose()
   };

@@ -75,7 +75,7 @@ export default function Overlay() {
       confetti: false,
     },
     info: {
-      color: "bg-info dark:bg-dark-info",
+      color: "bg-primary dark:bg-dark-primary",
       icon: "information",
       confetti: false,
     },
@@ -107,7 +107,7 @@ export default function Overlay() {
               className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-6 py-6 items-center gap-4 shadow-2xl justify-center"
             >
               <Animated.View
-                className={` ${config.color} shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center`}
+               className={`${config.color} shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center`}
               >
                 <MaterialCommunityIcons
                   name={config.icon}

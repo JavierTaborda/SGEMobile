@@ -30,6 +30,7 @@ interface Props {
   items: PlanPagos[];
   methods: MethodPay[];
   onAuthorize: (authorizedItems: PlanPagos[]) => Promise<void>;
+
 }
 
 /* ----------------------- HELPERS ----------------------- */
@@ -48,7 +49,7 @@ function buildAuthorizedItems(
         : Number(item.montosaldo) * (item.moneda === "USD" ? rate : 1);
 
     // Override only first item if custom amount is provided
-    if (index === 0 && customAmount !== undefined) {
+    if (index === 0 && customAmount !== undefined && customAmount > 0) {
       montoautorizado = customAmount;
     }
 
@@ -62,7 +63,6 @@ function buildAuthorizedItems(
       empresapagadora: selectedMethod?.empresapagadora ?? "",
       bancopagador: selectedMethod?.bancopago ?? "",
 
-      // Default/zero values (as per your original)
       planpagonumero: 0,
       autorizadonumero: 0,
       codigobanco: null,
@@ -130,6 +130,20 @@ function useAuthPayRules(
   }, [items, methods, formaPago]);
 }
 
+function buildUnAuthorizedItems(items: PlanPagos[]): PlanPagos[] {
+  return items.map((item) => ({
+    ...item,
+    autorizadopagar: 0,
+    monedaautorizada: null,
+    tasaautorizada: 0,
+    montoautorizado: 0,
+    metodopago: "",
+    empresapagadora: "",
+    bancopagador: "",
+    planpagonumero: 0,
+    autorizadonumero: 0,
+  }));
+}
 /* ----------------------- MAIN COMPONENT ----------------------- */
 
 export default function AuthPayModal({
@@ -193,7 +207,7 @@ export default function AuthPayModal({
       : (originalAmount * tasa).toFixed(2);
   }, [items, targetCurrency, tasa, showSingleItemAmountInput]);
 
-//Check the amount
+  //Check the amount
   const maxAllowedAmount = useMemo(() => {
     if (!showSingleItemAmountInput || !items[0] || tasa <= 0) return undefined;
 
@@ -205,8 +219,6 @@ export default function AuthPayModal({
 
     return targetCurrency === "USD" ? original / tasa : original * tasa;
   }, [items, tasa, targetCurrency, showSingleItemAmountInput]);
-
-
 
   const isValid = !!formaPago && (!requiresRate || tasa > 0);
 
@@ -274,16 +286,15 @@ export default function AuthPayModal({
       setShowErrors(true);
       return;
     }
-    
+
     if (exceedsAllowedAmount) {
-     
-        Alert.alert(
-          "Monto excedido",
-          `El monto autorizado no debe exceder ${totalVenezuela(
-            maxAllowedAmount!
-          )} ${targetCurrency}.`
-        );
-        return;
+      Alert.alert(
+        "Monto excedido",
+        `El monto autorizado no debe exceder ${totalVenezuela(
+          maxAllowedAmount!
+        )} ${targetCurrency}.`
+      );
+      return;
     }
 
     setIsLoading(true);
@@ -329,6 +340,48 @@ export default function AuthPayModal({
     onClose,
     overlay,
   ]);
+  const handleUnAuthorize = useCallback(async () => {
+
+    Alert.alert(
+      "¿Cancelar autorización?",
+      `Se cancelará la autorización de ${items.length} documento${items.length !== 1 ? "s" : ""}. Esta acción no se puede deshacer.`,
+      [
+        {
+          text: "No, mantener autorización",
+          style: "cancel",
+        },
+        {
+          text: "Sí, cancelar autorización",
+          style: "destructive", 
+          onPress: async () => {
+            setIsLoading(true);
+
+            try {
+              const unAuthorizedItems = buildUnAuthorizedItems(items);
+
+              await onAuthorize(unAuthorizedItems);
+
+              overlay.show("info", {
+                title: "Autorización cancelada",
+                subtitle: `${items.length} documento${items.length !== 1 ? "s" : ""} desautorizado${items.length !== 1 ? "s" : ""} correctamente`,
+              });
+
+              onClose();
+            } catch (error) {
+              overlay.show("error", {
+                title: "Error al desautorizar",
+                subtitle:
+                  error instanceof Error ? error.message : "Error desconocido",
+              });
+            } finally {
+              setIsLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }, [ items, ]);
 
   if (!visible || items.length === 0) return null;
 
@@ -478,15 +531,25 @@ export default function AuthPayModal({
 
         {hasAlreadyAuthorized && (
           <TouchableOpacity
-            className="py-4 rounded-xl border border-primary dark:border-dark-primary items-center"
-            onPress={onClose}
+            className={`py-4 rounded-xl border items-center ${
+              isLoading
+                ? "border-primary/40 dark:border-dark-primary/40"
+                : "border-primary dark:border-dark-primary"
+            }`}
+            disabled={isLoading}
+            onPress={handleUnAuthorize}
           >
-            <Text className="text-primary dark:text-dark-primary font-bold">
-              Cancelar autorización
+            <Text
+              className={`font-bold text-base ${
+                isLoading
+                  ? "text-primary/50"
+                  : "text-primary dark:text-dark-primary"
+              }`}
+            >
+              {isLoading ? "Procesando..." : "Cancelar autorización"}
             </Text>
           </TouchableOpacity>
         )}
-
         <TouchableOpacity
           className="rounded-xl py-4 bg-error"
           onPress={onClose}

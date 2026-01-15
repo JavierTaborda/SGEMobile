@@ -20,7 +20,7 @@ export function useAuthPays(searchText: string) {
     company: [],
     unidad: [],
     beneficiario: [],
-    currency:[],
+    currency:[],        
     status:[]
   })
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
