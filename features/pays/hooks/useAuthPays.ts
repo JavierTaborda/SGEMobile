@@ -5,10 +5,13 @@ import { groupAuthorizedPays } from '../helpers/groupAuthorizedPays';
 import { MethodPay } from '../interfaces/MethodPay';
 import { PlanPagos } from '../interfaces/PlanPagos';
 import { getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
+import { useAuthPaysStore } from '../stores/useAuthPaysStore';
 import { FilterData, SelectedFilters } from '../types/Filters';
 
 export function useAuthPays(searchText: string) {
-  const [pays, setPays] = useState<PlanPagos[]>([]);
+  const pays = useAuthPaysStore((s) => s.pays);
+  const setPays = useAuthPaysStore((s) => s.setPays);
+  const updatePays = useAuthPaysStore((s) => s.updatePays);
   const [methods, setMethods] = useState<MethodPay[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -176,21 +179,21 @@ useEffect(() => {
   loadData();
 }, [loadData]);
 
-const applyAuthorizationUpdate = useCallback(
-  (updatedDocuments: PlanPagos[]) => {
-    setPays((prevPays) => {
-      const updatedMap = new Map(
-        updatedDocuments.map((d) => [d.numerodocumento, d])
-      );
+// const applyAuthorizationUpdate = useCallback(
+//   (updatedDocuments: PlanPagos[]) => {
+//     setPays((prevPays) => {
+//       const updatedMap = new Map(
+//         updatedDocuments.map((d) => [d.numerodocumento, d])
+//       );
 
-      return prevPays.map((item) => {
-        const updated = updatedMap.get(item.numerodocumento);
-        return updated ? { ...item, ...updated } : item;
-      });
-    });
-  },
-  []
-);
+//       return prevPays.map((item) => {
+//         const updated = updatedMap.get(item.numerodocumento);
+//         return updated ? { ...item, ...updated } : item;
+//       });
+//     });
+//   },
+//   []
+// );
 
 const authorizedData = useMemo(() => {
   return groupAuthorizedPays(
@@ -251,7 +254,7 @@ const handleAuthorize = useCallback(() => {
 const udapteDocuments = async (documents: PlanPagos[]) => {
 
 
-  applyAuthorizationUpdate(documents);
+  updatePays(documents);
   setAuthSelectModalVisible(false);
 
   requestAnimationFrame(() => {
@@ -275,7 +278,6 @@ return {
   cooldown,
   canRefresh,
   error,
-  applyAuthorizationUpdate,
   authorizedData,
   filterModalVisible,
   setFilterModalVisible,

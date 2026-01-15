@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved `ScreenSearchLayout` with `showfilterButton` property.
 - Replaced `alert` with `Alert.alert`.
 - Replaced Expo Haptics with `safeHaptics`.
+- Replaced FlatList component with FlashList from `@shopify/flash-list`  
 
 ### Fixed
 

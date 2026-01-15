@@ -33,11 +33,11 @@ import { PlanPagos } from "../interfaces/PlanPagos";
 export default function AuthorizationScreen() {
   /* FILTERS / SEARCH*/
   const [searchText, setSearchText] = useState("");
-  const [authorized, setAuthorized] = useState(false);
-  const [currency, setCurrency] = useState("VED");
+
   const [tab, setTab] = useState<"pending" | "authorized">("pending");
   const pagerRef = useRef<PagerView>(null);
   const { isDark } = useThemeStore();
+
 
   /* DATA*/
   const {
@@ -53,7 +53,6 @@ export default function AuthorizationScreen() {
     cooldown,
     canRefresh,
     error,
-    applyAuthorizationUpdate,
     authorizedData,
     filterModalVisible,
     setFilterModalVisible,
