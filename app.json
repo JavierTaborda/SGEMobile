@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "owner": "cyberluxexpo",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/iconSGE.png",
     "scheme": "sge-mobile",
     "userInterfaceStyle": "automatic",
     "platforms": ["ios", "android", "web"],
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/iconSGE.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.sge.mobile",
@@ -29,18 +29,18 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/iconSGE.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon-light.png",
+          "image": "./assets/images/SplashSGE.png",
           "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "dark": {
-            "image": "./assets/images/splash-icon-dark.png",
+            "image": "./assets/images/SplashSGE.png",
             "backgroundColor": "#000000"
           },
           "android": {

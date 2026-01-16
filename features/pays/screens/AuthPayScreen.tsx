@@ -4,8 +4,7 @@ import {
   Dimensions,
   Pressable,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import PagerView from "react-native-pager-view";
 import Animated, {
@@ -23,6 +22,7 @@ import { totalVenezuela } from "@/utils/moneyFormat";
 import { safeHaptic } from "@/utils/safeHaptics";
 
 import ErrorView from "@/components/ui/ErrorView";
+import CreatePlanModal from "../components/ CreatePlanModal";
 import AuthorizedGroupedList from "../components/AuthorizedGroupedList";
 import AuthPayCard from "../components/AuthPayCard";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
@@ -37,7 +37,6 @@ export default function AuthorizationScreen() {
   const [tab, setTab] = useState<"pending" | "authorized">("pending");
   const pagerRef = useRef<PagerView>(null);
   const { isDark } = useThemeStore();
-
 
   /* DATA*/
   const {
@@ -69,10 +68,12 @@ export default function AuthorizationScreen() {
     headerTitle,
     handleAuthorize,
     udapteDocuments,
-   filterData,
+    filterData,
     selectedFilters,
     setSelectedFilters,
-    appliedFiltersCount
+    appliedFiltersCount,
+    createPlanModaleVisible,
+    setCreatePlanModaleVisible,
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -83,7 +84,6 @@ export default function AuthorizationScreen() {
       duration: 200,
     });
   }, [selectionMode]);
-
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: headerScale.value }],
@@ -203,7 +203,7 @@ export default function AuthorizationScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity
+              <Pressable
                 onPress={selectionMode ? exitSelectionMode : enterSelectionMode}
                 className={`
               px-3 py-2 rounded-xl flex-row items-center gap-2
@@ -234,7 +234,7 @@ export default function AuthorizationScreen() {
                 >
                   {selectionMode ? "Cancelar" : "Seleccionar"}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </Animated.View>
 
             {/* LIST */}
@@ -297,7 +297,7 @@ export default function AuthorizationScreen() {
                 >
                   <Pressable
                     disabled={totalDocumentsAuth < 1}
-                    onPress={handleAuthorize}
+                    onPress={() => setCreatePlanModaleVisible(true)}
                     className={`py-4 rounded-3xl items-center bg-primary dark:bg-dark-primary`}
                   >
                     <Text className="text-white font-bold text-xl">
@@ -367,6 +367,14 @@ export default function AuthorizationScreen() {
           onAuthorize={udapteDocuments}
         />
       )}
+      {createPlanModaleVisible && (
+        <CreatePlanModal
+          visible={createPlanModaleVisible}
+          items={filteredPays}
+          onClose={() => setCreatePlanModaleVisible(false)}
+        />
+      )}
+      
     </>
   );
 }

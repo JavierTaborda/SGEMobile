@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import Animated, {
@@ -344,7 +344,7 @@ export default function AuthPayModal({
 
     Alert.alert(
       "¿Cancelar autorización?",
-      `Se cancelará la autorización de ${items.length} documento${items.length !== 1 ? "s" : ""}. Esta acción no se puede deshacer.`,
+      `Se cancelará la autorización de ${items.length} documento${items.length !== 1 ? "s" : ""}.`,
       [
         {
           text: "No, mantener autorización",
@@ -479,11 +479,11 @@ export default function AuthPayModal({
 
         {/* Items detail */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
-          <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
+          <Pressable onPress={() => setExpanded((v) => !v)}>
             <Text className="text-primary dark:text-dark-primary font-bold text-base">
               {expanded ? "Ocultar detalle" : `Ver detalle (${items.length})`}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           <Animated.View style={expandStyle}>
             <FlatList
@@ -515,7 +515,7 @@ export default function AuthPayModal({
 
       {/* Actions */}
       <View className="pt-4 gap-y-3 ">
-        <TouchableOpacity
+        <Pressable
           className={`py-4 rounded-xl items-center ${
             !isValid || isLoading
               ? "bg-primary/50 dark:bg-dark-primary/50"
@@ -527,10 +527,10 @@ export default function AuthPayModal({
           <Text className="text-white font-bold text-base">
             {isLoading ? "Procesando..." : `Autorizar (${items.length})`}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
         {hasAlreadyAuthorized && (
-          <TouchableOpacity
+          <Pressable
             className={`py-4 rounded-xl border items-center ${
               isLoading
                 ? "border-primary/40 dark:border-dark-primary/40"
@@ -548,14 +548,14 @@ export default function AuthPayModal({
             >
               {isLoading ? "Procesando..." : "Cancelar autorización"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
-        <TouchableOpacity
+        <Pressable
           className="rounded-xl py-4 bg-error"
           onPress={onClose}
         >
           <Text className="text-white text-center font-bold">Cancelar</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </BottomModal>
   );

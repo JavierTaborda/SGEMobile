@@ -82,5 +82,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Unnecessary UI elements (emojis and icons in Home and Drawer).
 - Duplicate dependencies replaced by internal utilities.
-
-```
