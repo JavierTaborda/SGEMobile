@@ -74,6 +74,8 @@ export default function AuthorizationScreen() {
     appliedFiltersCount,
     createPlanModaleVisible,
     setCreatePlanModaleVisible,
+    createPlanPago,
+    refreshData,
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -129,6 +131,18 @@ export default function AuthorizationScreen() {
     },
     [selectionMode, selectedIds, toggleSelect]
   );
+  const handleCreatePlanSuccess = useCallback(() => {
+    setCreatePlanModaleVisible(false);
+
+    requestAnimationFrame(() => {
+      pagerRef.current?.setPage(0);
+      setTab("pending");
+    });
+    refreshData()
+    
+    
+  }, []);
+
 
   if (loading) return <AuthPaySkeleton />;
   if (error) return <ErrorView error={error} getData={handleRefresh} />;
@@ -372,9 +386,18 @@ export default function AuthorizationScreen() {
           visible={createPlanModaleVisible}
           items={filteredPays}
           onClose={() => setCreatePlanModaleVisible(false)}
+          createPlan={async (data) => {
+            const success = await createPlanPago(data);
+
+            if (success) {
+              
+              handleCreatePlanSuccess();
+            }
+
+            return success;
+          }}
         />
       )}
-      
     </>
   );
 }

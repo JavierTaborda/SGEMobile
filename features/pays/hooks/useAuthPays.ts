@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { groupAuthorizedPays } from '../helpers/groupAuthorizedPays';
 import { MethodPay } from '../interfaces/MethodPay';
+import { PlanificacionPago } from '../interfaces/PlanificacionPagos';
 import { PlanPagos } from '../interfaces/PlanPagos';
-import { getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
+import { createPlan, getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
 import { useAuthPaysStore } from '../stores/useAuthPaysStore';
 import { FilterData, SelectedFilters } from '../types/Filters';
 
@@ -144,18 +145,18 @@ export function useAuthPays(searchText: string) {
 
 
   // Refresh
-  const handleRefresh = useCallback(() => {      
+  const handleRefresh = useCallback(() => {
     wrapRefresh(
       async () => {
         Alert.alert(
           "Actualizar documentos ",
-        
+
           "Al refrescar los datos se eliminaran los caambios aplicados. ¿Desea continuar?",
           [
             {
               text: "No, quiero mantener cambios.",
               style: "cancel",
-             
+
             },
             {
               text: "Si, actualizar documentos.",
@@ -167,8 +168,9 @@ export function useAuthPays(searchText: string) {
           ],
           { cancelable: true }
         );
-   
 
+        const methodsData = await getMethodPays();
+        setMethods(methodsData);
       },
       () => setError("Ocurrió un error al cargar los datos...")
     );
@@ -223,8 +225,7 @@ export function useAuthPays(searchText: string) {
         );
       } else {
         await refreshData();
-        const methodsData = await getMethodPays();
-        setMethods(methodsData);
+
         buildFilters(pays);
         setLoading(false);
       }
@@ -250,76 +251,6 @@ export function useAuthPays(searchText: string) {
     });
   };
 
-
-  // const loadData = useCallback(async () => {
-  //   try {
-  //     setError(null);
-
-  //     if (hasCache) {
-  //       const methodsData = await getMethodPays()
-  //       setMethods(methodsData);
-  //       //Filters
-  //       buildFilters(pays);
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     const [paysData, methodsData] = await Promise.all([
-  //       getPaysToAuthorize(),
-  //       getMethodPays(),
-  //     ]);
-
-
-  //     setPays(paysData);
-  //     setMethods(methodsData);
-
-  //     //Filters
-  //     buildFilters(paysData);
-
-
-  //   } catch (err) {
-
-  //     setError("Ocurrió un error al cargar los datos.");
-  //   } finally {
-
-  //     setLoading(false);
-
-  //   }
-  // }, []);
-
-  // const buildFilters = (data: PlanPagos[]) => {
-  //   setFilterData({
-  //     claseGasto: [...new Set(data.map(d => d.clasegasto ?? ""))],
-  //     tipoProveedor: [...new Set(data.map(d => d.tipoproveedor ?? ""))],
-  //     company: [...new Set(data.map(d => d.empresa ?? ""))],
-  //     unidad: [...new Set(data.map(d => d.unidad ?? ""))],
-  //     beneficiario: [...new Set(data.map(d => d.beneficiario ?? ""))],
-  //     currency: [...new Set(data.map(d => d.moneda ?? ""))],
-  //     status: ["SIN AUTORIZAR", "AUTORIZADOS", "TODOS"],
-  //   });
-  // };
-
-
-
-  // useEffect(() => {
-  //   loadData();
-  // }, [loadData]);
-
-  // const applyAuthorizationUpdate = useCallback(
-  //   (updatedDocuments: PlanPagos[]) => {
-  //     setPays((prevPays) => {
-  //       const updatedMap = new Map(
-  //         updatedDocuments.map((d) => [d.numerodocumento, d])
-  //       );
-
-  //       return prevPays.map((item) => {
-  //         const updated = updatedMap.get(item.numerodocumento);
-  //         return updated ? { ...item, ...updated } : item;
-  //       });
-  //     });
-  //   },
-  //   []
-  // );
 
   const authorizedData = useMemo(() => {
     return groupAuthorizedPays(
@@ -389,6 +320,15 @@ export function useAuthPays(searchText: string) {
     });
 
   };
+  const createPlanPago = async (documents: PlanificacionPago): Promise<boolean> => {
+    try {
+      const success: boolean = await createPlan(documents);
+      return success;
+    } catch (err) {
+      setError("Ocurrió un error al cargar los datos.");
+      return false; 
+    }
+  };
 
 
   return {
@@ -406,6 +346,7 @@ export function useAuthPays(searchText: string) {
     canRefresh,
     error,
     authorizedData,
+    refreshData,
     //Modals
     createPlanModaleVisible, setCreatePlanModaleVisible,
     filterModalVisible,
@@ -430,7 +371,9 @@ export function useAuthPays(searchText: string) {
     //filters
     filterData,
     selectedFilters, setSelectedFilters,
-    appliedFiltersCount
+    appliedFiltersCount,
+
+    createPlanPago
 
   };
 }

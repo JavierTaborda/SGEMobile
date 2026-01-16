@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const splashOpacity = useSharedValue(1);
   const contentOpacity = useSharedValue(0);
 
-  // estilos animados
+
   const splashStyle = useAnimatedStyle(() => ({
     ...StyleSheet.absoluteFillObject,
     opacity: splashOpacity.value,
@@ -32,13 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     opacity: contentOpacity.value,
   }));
 
-  // esperar primer render
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // refresh de sesión en supabase
+
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (event, session) => {
