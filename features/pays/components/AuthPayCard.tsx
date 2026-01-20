@@ -4,7 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming
+  withTiming,
 } from "react-native-reanimated";
 
 import { dateMonthText } from "@/utils/datesFormat";
@@ -24,7 +24,7 @@ interface Props {
   onLongPress?: () => void;
 }
 
-export default function AuthPayCard ({
+export default function AuthPayCard({
   item,
   selected = false,
   selectionMode = false,
@@ -41,17 +41,15 @@ export default function AuthPayCard ({
   const cardScale = useSharedValue(1);
 
   /* Effecs to show /hide checkbox*/
-useEffect(() => {
-  if (selectionMode) {
-    checkboxTranslateX.value = withTiming(0, { duration: 200 });
-    checkboxOpacity.value = withTiming(1, { duration: 140 });
-  } else {
-   
-    checkboxTranslateX.value = withTiming(-12, { duration: 140 });
-    checkboxOpacity.value = withTiming(0, { duration: 100 });
-  }
-}, [selectionMode]);
-
+  useEffect(() => {
+    if (selectionMode) {
+      checkboxTranslateX.value = withTiming(0, { duration: 200 });
+      checkboxOpacity.value = withTiming(1, { duration: 140 });
+    } else {
+      checkboxTranslateX.value = withTiming(-12, { duration: 140 });
+      checkboxOpacity.value = withTiming(0, { duration: 100 });
+    }
+  }, [selectionMode]);
 
   /* ANIMATED STYLES*/
   const checkboxStyle = useAnimatedStyle(() => ({
@@ -59,10 +57,8 @@ useEffect(() => {
     transform: [{ translateX: checkboxTranslateX.value }],
   }));
 
- 
-
   /* HANDLERS*/
-  const handlePress = () => { 
+  const handlePress = () => {
     if (selectionMode) {
       onSelect?.(item);
     } else {
@@ -71,7 +67,7 @@ useEffect(() => {
   };
 
   return (
-    <Animated.View >
+    <Animated.View>
       <Pressable
         onPress={handlePress}
         onLongPress={onLongPress}
@@ -153,19 +149,16 @@ useEffect(() => {
 
             {/* Chips */}
             <View className="flex-row flex-wrap gap-2 mt-1">
-              {[item.empresa, item.clasegasto].map(
-                (label) =>
-                  label && (
-                    <View
-                      key={label}
-                      className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700"
-                    >
-                      <Text className="text-xs text-gray-600 dark:text-gray-300">
-                        {label}
-                      </Text>
-                    </View>
-                  )
-              )}
+              <View className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700">
+                <Text className="text-xs text-gray-600 dark:text-gray-300">
+                  {item.empresa}
+                </Text>
+              </View>
+              <View className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700">
+                <Text className="text-xs text-gray-600 dark:text-gray-300">
+                  {item.clasegasto}
+                </Text>
+              </View>
             </View>
 
             {/* Meta */}

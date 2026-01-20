@@ -1,14 +1,18 @@
-import { safeHaptic } from '@/utils/safeHaptics';
-import { useRefreshControl } from '@/utils/userRefreshControl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
-import { groupAuthorizedPays } from '../helpers/groupAuthorizedPays';
-import { MethodPay } from '../interfaces/MethodPay';
-import { PlanificacionPago } from '../interfaces/PlanificacionPagos';
-import { PlanPagos } from '../interfaces/PlanPagos';
-import { createPlan, getMethodPays, getPaysToAuthorize } from '../services/AuthPaysServices';
-import { useAuthPaysStore } from '../stores/useAuthPaysStore';
-import { FilterData, SelectedFilters } from '../types/Filters';
+import { safeHaptic } from "@/utils/safeHaptics";
+import { useRefreshControl } from "@/utils/userRefreshControl";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert } from "react-native";
+import { groupAuthorizedPays } from "../helpers/groupAuthorizedPays";
+import { MethodPay } from "../interfaces/MethodPay";
+import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
+import { PlanPagos } from "../interfaces/PlanPagos";
+import {
+  createPlan,
+  getMethodPays,
+  getPaysToAuthorize,
+} from "../services/AuthPaysServices";
+import { useAuthPaysStore } from "../stores/useAuthPaysStore";
+import { FilterData, SelectedFilters } from "../types/Filters";
 
 export function useAuthPays(searchText: string) {
   const pays = useAuthPaysStore((s) => s.pays);
@@ -19,8 +23,6 @@ export function useAuthPays(searchText: string) {
   const [methods, setMethods] = useState<MethodPay[]>([]);
   const [loading, setLoading] = useState(true);
 
-
-
   //Filters
 
   const [filterData, setFilterData] = useState<FilterData>({
@@ -30,21 +32,22 @@ export function useAuthPays(searchText: string) {
     unidad: [],
     beneficiario: [],
     currency: [],
-    status: []
-  })
+    status: [],
+  });
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
-    selectedClaseGasto: '',
-    selectedTipoProveedor: '',
-    selectedCompany: '',
-    selectedUnidad: '',
-    selectedBeneficiario: '',
-    selectedCurrency: '',
-    selectedStatus: '',
+    selectedClaseGasto: "",
+    selectedTipoProveedor: "",
+    selectedCompany: "",
+    selectedUnidad: "",
+    selectedBeneficiario: "",
+    selectedCurrency: "",
+    selectedStatus: "",
   });
 
   const [error, setError] = useState<string | null>(null);
 
-  const { refreshing, canRefresh, cooldown, wrapRefresh, cleanup } = useRefreshControl(15);
+  const { refreshing, canRefresh, cooldown, wrapRefresh, cleanup } =
+    useRefreshControl(15);
 
   useEffect(() => cleanup, []);
 
@@ -53,8 +56,6 @@ export function useAuthPays(searchText: string) {
     const diff = Date.now() - lastSync;
     return diff > 30 * 60 * 1000; // 30 minutes
   }, [lastSync]);
-
-
 
   // dynamic filter
   const filteredPays = useMemo(() => {
@@ -90,7 +91,6 @@ export function useAuthPays(searchText: string) {
         item.moneda === selectedFilters.selectedCurrency;
 
       const matchesStatus = () => {
-
         switch (selectedFilters.selectedStatus) {
           case "SIN AUTORIZAR":
             return item.autorizadopagar === 0;
@@ -103,7 +103,7 @@ export function useAuthPays(searchText: string) {
           default:
             return true;
         }
-      }
+      };
 
       return (
         matchesSearch &&
@@ -112,20 +112,21 @@ export function useAuthPays(searchText: string) {
         matchesCompany &&
         matchesUnidad &&
         matchesBeneficiario &&
-        matchesCurrency && matchesStatus()
+        matchesCurrency &&
+        matchesStatus()
       );
     });
   }, [pays, searchText, selectedFilters]);
 
   const totalAutorizadoVED = useMemo(() => {
     return filteredPays
-      .filter((d) => d.monedaautorizada === 'VED' && d.autorizadopagar === 1)
+      .filter((d) => d.monedaautorizada === "VED" && d.autorizadopagar === 1)
       .reduce((acc, item) => acc + Number(item.montoautorizado), 0);
   }, [filteredPays]);
 
   const totalAutorizadoUSD = useMemo(() => {
     return filteredPays
-      .filter((d) => d.monedaautorizada === 'USD' && d.autorizadopagar === 1)
+      .filter((d) => d.monedaautorizada === "USD" && d.autorizadopagar === 1)
       .reduce((acc, item) => acc + Number(item.montoautorizado), 0);
   }, [filteredPays]);
 
@@ -137,12 +138,11 @@ export function useAuthPays(searchText: string) {
     return filteredPays.filter((d) => d.autorizadopagar === 0).length;
   }, [filteredPays]);
 
-
   const appliedFiltersCount = useMemo(() => {
-    return Object.values(selectedFilters).filter((value) => value && value !== '').length;
+    return Object.values(selectedFilters).filter(
+      (value) => value && value !== "",
+    ).length;
   }, [selectedFilters]);
-
-
 
   // Refresh
   const handleRefresh = useCallback(() => {
@@ -156,7 +156,6 @@ export function useAuthPays(searchText: string) {
             {
               text: "No, quiero mantener cambios.",
               style: "cancel",
-
             },
             {
               text: "Si, actualizar documentos.",
@@ -166,16 +165,15 @@ export function useAuthPays(searchText: string) {
               },
             },
           ],
-          { cancelable: true }
+          { cancelable: true },
         );
 
         const methodsData = await getMethodPays();
         setMethods(methodsData);
       },
-      () => setError("Ocurrió un error al cargar los datos...")
+      () => setError("Ocurrió un error al cargar los datos..."),
     );
   }, [wrapRefresh]);
-
 
   const refreshData = async () => {
     try {
@@ -194,13 +192,11 @@ export function useAuthPays(searchText: string) {
     }
   };
 
-
   const loadData = useCallback(async () => {
     setError(null);
 
     if (pays.length > 0) {
       if (!isCacheExpired) {
-
         Alert.alert(
           "Documentos en caché disponibles",
           "hay documentos actualizados con menos de 30 minutos de sincronización. ¿Desea mantener estos documentos o actualizar a los mas recientes. Se perderan los datos no guardados.?",
@@ -221,7 +217,7 @@ export function useAuthPays(searchText: string) {
               },
             },
           ],
-          { cancelable: true }
+          { cancelable: true },
         );
       } else {
         await refreshData();
@@ -231,8 +227,6 @@ export function useAuthPays(searchText: string) {
       }
       return;
     }
-
-
   }, [isCacheExpired]);
 
   useEffect(() => {
@@ -241,20 +235,19 @@ export function useAuthPays(searchText: string) {
 
   const buildFilters = (data: PlanPagos[]) => {
     setFilterData({
-      claseGasto: [...new Set(data.map(d => d.clasegasto ?? ""))],
-      tipoProveedor: [...new Set(data.map(d => d.tipoproveedor ?? ""))],
-      company: [...new Set(data.map(d => d.empresa ?? ""))],
-      unidad: [...new Set(data.map(d => d.unidad ?? ""))],
-      beneficiario: [...new Set(data.map(d => d.beneficiario ?? ""))],
-      currency: [...new Set(data.map(d => d.moneda ?? ""))],
+      claseGasto: [...new Set(data.map((d) => d.clasegasto ?? ""))],
+      tipoProveedor: [...new Set(data.map((d) => d.tipoproveedor ?? ""))],
+      company: [...new Set(data.map((d) => d.empresa ?? ""))],
+      unidad: [...new Set(data.map((d) => d.unidad ?? ""))],
+      beneficiario: [...new Set(data.map((d) => d.beneficiario ?? ""))],
+      currency: [...new Set(data.map((d) => d.moneda ?? ""))],
       status: ["SIN AUTORIZAR", "AUTORIZADOS", "TODOS"],
     });
   };
 
-
   const authorizedData = useMemo(() => {
     return groupAuthorizedPays(
-      filteredPays.filter((d) => d.autorizadopagar === 1)
+      filteredPays.filter((d) => d.autorizadopagar === 1),
     );
   }, [filteredPays]);
 
@@ -281,9 +274,8 @@ export function useAuthPays(searchText: string) {
   const selectedItems = useMemo(
     () =>
       filteredPays.filter((i) => selectedIds.has(String(i.numerodocumento))),
-    [filteredPays, selectedIds]
+    [filteredPays, selectedIds],
   );
-
 
   const toggleSelect = useCallback((item: PlanPagos) => {
     safeHaptic("selection");
@@ -303,33 +295,30 @@ export function useAuthPays(searchText: string) {
     return `${selectedIds.size}/${filteredPays.length} documentos`;
   }, [selectionMode, selectedIds.size, totalDocumentsAuth, filteredPays]);
 
-
   /*HANDLERS */
 
   const handleAuthorize = useCallback(() => {
     setAuthSelectModalVisible(true);
   }, []);
   const udapteDocuments = async (documents: PlanPagos[]) => {
-
-
     updatePays(documents);
     setAuthSelectModalVisible(false);
 
     requestAnimationFrame(() => {
       exitSelectionMode();
     });
-
   };
-  const createPlanPago = async (documents: PlanificacionPago): Promise<boolean> => {
+  const createPlanPago = async (
+    documents: PlanificacionPago,
+  ): Promise<boolean> => {
     try {
       const success: boolean = await createPlan(documents);
       return success;
     } catch (err) {
       setError("Ocurrió un error al cargar los datos.");
-      return false; 
+      return false;
     }
   };
-
 
   return {
     pays,
@@ -348,7 +337,8 @@ export function useAuthPays(searchText: string) {
     authorizedData,
     refreshData,
     //Modals
-    createPlanModaleVisible, setCreatePlanModaleVisible,
+    createPlanModaleVisible,
+    setCreatePlanModaleVisible,
     filterModalVisible,
     setFilterModalVisible,
     authSelectModalVisible,
@@ -367,13 +357,12 @@ export function useAuthPays(searchText: string) {
     udapteDocuments,
     toggleSelect,
 
-
     //filters
     filterData,
-    selectedFilters, setSelectedFilters,
+    selectedFilters,
+    setSelectedFilters,
     appliedFiltersCount,
 
-    createPlanPago
-
+    createPlanPago,
   };
 }

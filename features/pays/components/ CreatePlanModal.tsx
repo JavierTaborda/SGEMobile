@@ -35,8 +35,24 @@ export default function AuthPayModal({
   const [dateModalVisible, setDateModalVisible] = useState(false);
 
   const [planificacion, setPlanificacionPago] = useState<PlanificacionPago>({
-    descripcion: "",
-    date: new Date(),
+    descripcionplan: "",
+    unidad: "",
+    empresa: "",
+    owneruser: 0,
+    planpagonumero: 0,
+    totalnetobsd: 0,
+    totalnetousd: 0,
+    totalsaldobsd: 0,
+    totalsaldousd: 0,
+    totalautorizadobsd: 0,
+    totalautorizadousd: 0,
+    totalpagadobsd: 0,
+    totalpagadousd: 0,
+    totalxpagarbsd: 0,
+    totalxpagarusd: 0,
+    generadotxt: false,
+    conciliadopago: false,
+    fechapagoautorizada: new Date(),
     items,
   });
   const overlay = useOverlayStore();
@@ -80,7 +96,7 @@ export default function AuthPayModal({
         acc[keyBanco][moneda] = (acc[keyBanco][moneda] || 0) + monto;
 
         return acc;
-      }, {})
+      }, {}),
     )
       .map(([banco, monedas]) => ({
         banco,
@@ -104,9 +120,9 @@ export default function AuthPayModal({
 
           <CustomTextInput
             placeholder="Descripción del plan"
-            value={planificacion.descripcion}
+            value={planificacion.descripcionplan}
             onChangeText={(text) =>
-              setPlanificacionPago({ ...planificacion, descripcion: text })
+              setPlanificacionPago({ ...planificacion, descripcionplan: text })
             }
             numberOfLines={3}
             multiline
@@ -119,11 +135,11 @@ export default function AuthPayModal({
           </Text>
 
           <Pressable
-            className="border border-gray-300 dark:border-gray-600 rounded-xl p-3"
+            className="border border-gray-300 dark:border-gray-600 rounded-xl p-4"
             onPress={() => setDateModalVisible(true)}
           >
             <Text className="text-base text-foreground dark:text-dark-foreground">
-              {planificacion.date.toLocaleDateString("es-VE", {
+              {planificacion.fechapagoautorizada.toLocaleDateString("es-VE", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
@@ -163,7 +179,7 @@ export default function AuthPayModal({
                     {m.moneda}
                   </Text>
 
-                  <Text className="font-bold text-foreground dark:text-dark-foreground">
+                  <Text className="font-bold text-primary dark:text-dark-primary">
                     {totalVenezuela(m.total)} {m.moneda === "VED" ? "Bs" : "$"}
                   </Text>
                 </View>
@@ -182,7 +198,7 @@ export default function AuthPayModal({
           >
             <View className="bg-componentbg dark:bg-dark-componentbg p-4 rounded-t-2xl">
               <DateTimePicker
-                value={planificacion.date}
+                value={planificacion.fechapagoautorizada}
                 mode="date"
                 minimumDate={new Date()}
                 display="spinner"
@@ -190,7 +206,7 @@ export default function AuthPayModal({
                   if (selectedDate) {
                     setPlanificacionPago({
                       ...planificacion,
-                      date: selectedDate,
+                      fechapagoautorizada: selectedDate,
                     });
                   }
                 }}
@@ -218,7 +234,7 @@ export default function AuthPayModal({
 
       {Platform.OS === "android" && dateModalVisible && (
         <DateTimePicker
-          value={planificacion.date}
+          value={planificacion.fechapagoautorizada}
           mode="date"
           display="calendar"
           minimumDate={new Date()}
@@ -227,7 +243,7 @@ export default function AuthPayModal({
             if (selectedDate) {
               setPlanificacionPago({
                 ...planificacion,
-                date: selectedDate,
+                fechapagoautorizada: selectedDate,
               });
             }
           }}
