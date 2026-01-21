@@ -1,17 +1,17 @@
-import { ChartLineView } from "@/components/charts/ChartLineView";
 import ErrorView from "@/components/ui/ErrorView";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { totalVenezuela } from "@/utils/moneyFormat";
 import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
+import { PieChart } from "react-native-gifted-charts";
 import HomeSkeleton from "../components/HomeSkeleton";
 import { InfoCard } from "../components/InfoCard";
 import { ModuleButton } from "../components/ModuleButton";
 import { useHomeScreen } from "../hooks/useHomeScreen";
 
 export default function HomeScreen() {
-  const { session,name } = useAuthStore();
+  const { session, name } = useAuthStore();
   const { isDark } = useThemeStore();
   const {
     loading,
@@ -33,6 +33,29 @@ export default function HomeScreen() {
   if (error) {
     return <ErrorView error={error} getData={getData} />;
   }
+  const pieData = [
+    {
+      value: 47,
+      color: "#4F46E5",
+      gradientCenterColor: "#6366F1",
+      focused: true,
+    },
+    {
+      value: 40,
+      color: "#10B981",
+      gradientCenterColor: "#34D399",
+    },
+    {
+      value: 10,
+      color: "#F59E0B",
+      gradientCenterColor: "#FBBF24",
+    },
+    {
+      value: 3,
+      color: "#EF4444",
+      gradientCenterColor: "#F87171",
+    },
+  ];
 
   return (
     <ScrollView
@@ -62,13 +85,13 @@ export default function HomeScreen() {
         <View className="flex-row flex-wrap justify-between gap-4 mb-4 pt-1">
           <InfoCard
             //icon={emojis.package}
-            title="Total Pedidos"
+            title="Documentos autorizados"
             value={totalPedidos}
             //bgColor="bg-primary dark:bg-dark-primary"
           />
           <InfoCard
             //icon={emojis.money}
-            title="Total Neto"
+            title="Total "
             value={`${totalVenezuela(totalNeto)} $`}
             //bgColor="bg-secondary dark:bg-dark-secondary"
           />
@@ -78,62 +101,53 @@ export default function HomeScreen() {
         {/* <Text className="text-xl text-foreground dark:text-dark-foreground font-semibold mb-2 mt-2">
           {emojis.chartUp} {chartText}
         </Text> */}
-        <Text className="text-xl text-foreground dark:text-dark-foreground font-bold mb-2 mt-2">
+        {/* <Text className="text-xl text-foreground dark:text-dark-foreground font-bold mb-2 mt-2">
           {chartText}
-        </Text>
-        <ChartLineView
+        </Text> */}
+        {/* <ChartLineView
           labels={labels}
           values={values}
           dotLabels={dotLabels}
           isDark={isDark}
-        />
+        /> */}
 
-        {/* Modules */}
-        {/* <Text className="text-xl text-foreground dark:text-dark-foreground font-semibold pt-2 mb-2 mt-2">
-          {emojis.search} Módulos principales
-        </Text> */}
+        <View className="flex-1 items-center mt-4 mb-4">
+          <PieChart
+            data={pieData}
+            donut
+            showGradient
+            radius={120}
+            innerRadius={60}
+            innerCircleColor={"#232B5D"}
+            centerLabelComponent={() => {
+              return (
+                <View
+                  style={{ justifyContent: "center", alignItems: "center" }}
+                >
+                  <Text
+                    style={{ fontSize: 22, color: "white", fontWeight: "bold" }}
+                  >
+                    47%
+                  </Text>
+                  <Text style={{ fontSize: 14, color: "white" }}>
+                    Excellent
+                  </Text>
+                </View>
+              );
+            }}
+          />
+        </View>
 
         <View className="flex-row flex-wrap justify-between pt-4">
-        <View className="w-[49%] mb-4">
+          <View className="w-[49%] mb-4">
             <ModuleButton
               //icon={emojis.approved}
               //icon={   emojis.package}
               label="Autorización de Pagos"
-              onPress={() =>
-                router.push("/(main)/(tabs)/(pays)/authPays")
-              }
+              onPress={() => router.push("/(main)/(tabs)/(pays)/authPays")}
               bgColor="bg-primary dark:bg-dark-primary"
             />
-          </View>  
-          {/* 
-          <View className="w-[49%] mb-4">
-            <ModuleButton
-              //icon={emojis.list}
-              //icon={emojis.approved}
-              label="Consultar Pedidos"
-              onPress={() => router.push("/(main)/(tabs)/(orders)/orderSearch")}
-              bgColor="bg-secondary dark:bg-dark-secondary"
-            />
           </View>
-          <View className="w-[49%] mb-4">
-            <ModuleButton
-              //icon={emojis.list}
-              //icon={emojis.approved}
-              label="Resumen Metas de Ventas"
-              onPress={() => router.push("/(main)/(tabs)/(goals)/goalsResumen")}
-              bgColor="bg-green-500 dark:bg-green-400"
-            />
-          </View>
-          <View className="w-[49%] mb-4">
-            <ModuleButton
-              //icon={emojis.list}
-              //icon={emojis.approved}
-              label="Reportar Devolución "
-              onPress={() => router.push("/(main)/(tabs)/(returnReport)")}
-              bgColor="bg-green-600 dark:bg-green-300"
-            />
-          </View> */}
-    
         </View>
       </View>
     </ScrollView>

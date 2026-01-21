@@ -1,20 +1,27 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  Dimensions,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
 import CustomTextInput from "@/components/inputs/CustomTextInput";
-import BottomModal from "@/components/ui/BottomModal";
 import { BlurView } from "expo-blur";
 
 import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import { totalVenezuela } from "@/utils/moneyFormat";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
 import type { PlanPagos } from "../interfaces/PlanPagos";
 
@@ -24,13 +31,15 @@ interface Props {
   items: PlanPagos[];
   createPlan: (documents: PlanificacionPago) => Promise<boolean>;
 }
-
+const { height, width } = Dimensions.get("window");
 export default function AuthPayModal({
   visible,
   onClose,
   items,
   createPlan,
 }: Props) {
+  if (!visible) return null;
+
   const [isLoading, setIsLoading] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
 
@@ -55,25 +64,35 @@ export default function AuthPayModal({
     fechapagoautorizada: new Date(),
     items,
   });
+
+  const [tempDate, setTempDate] = useState(planificacion.fechapagoautorizada);
+
   const overlay = useOverlayStore();
 
   const handleCreatePlan = async () => {
+    if (isLoading) return;
+
     setIsLoading(true);
     try {
       const success = await createPlan(planificacion);
+
       if (success) {
         onClose();
         overlay.show("success", {
           title: "Plan creado",
-          subtitle: "Se ha creado el plan #N exitosamente.",
+          subtitle: "Se ha creado el plan exitosamente.",
         });
       } else {
         overlay.show("error", {
-          title: "No se logro crear el plan",
-          subtitle: "SNo se ha creado el plan",
+          title: "No se logró crear el plan",
+          subtitle: "Intenta nuevamente.",
         });
       }
     } catch {
+      overlay.show("error", {
+        title: "Error",
+        subtitle: "Ocurrió un error al crear el plan.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -102,188 +121,236 @@ export default function AuthPayModal({
         banco,
         monedas: Object.entries(monedas)
           .filter(([, total]) => total > 0)
-          .map(([moneda, total]) => ({
-            moneda,
-            total,
-          })),
+          .map(([moneda, total]) => ({ moneda, total })),
       }))
       .filter((item) => item.monedas.length > 0);
   }, [items]);
 
+  const translateY = useSharedValue(visible ? 0 : height);
+
+  useEffect(() => {
+    translateY.value = withTiming(visible ? 0 : height, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [visible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <BottomModal visible={visible} onClose={onClose} heightPercentage={0.85}>
-      <ScrollView contentContainerClassName="gap-4 pt-2 pb-6">
-        <View className="gap-2">
-          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
-            Descripción
-          </Text>
-
-          <CustomTextInput
-            placeholder="Descripción del plan"
-            value={planificacion.descripcionplan}
-            onChangeText={(text) =>
-              setPlanificacionPago({ ...planificacion, descripcionplan: text })
-            }
-            numberOfLines={3}
-            multiline
-          />
-        </View>
-
-        <View className="gap-2">
-          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
-            Fecha
-          </Text>
-
-          <Pressable
-            className="border border-gray-300 dark:border-gray-600 rounded-xl p-4"
-            onPress={() => setDateModalVisible(true)}
-          >
-            <Text className="text-base text-foreground dark:text-dark-foreground">
-              {planificacion.fechapagoautorizada.toLocaleDateString("es-VE", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
-            </Text>
-          </Pressable>
-        </View>
-
-        <View className="gap-3">
-          <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
-            Resumen
-          </Text>
-
-          {result.length === 0 && (
-            <View className="items-center py-6">
-              <Text className="text-muted-foreground dark:text-dark-muted-foreground">
-                No hay montos válidos para planificar
-              </Text>
-            </View>
-          )}
-
-          {result.map((item) => (
-            <View
-              key={item.banco}
-              className="bg-componentbg dark:bg-dark-componentbg rounded-xl p-4"
-            >
-              <Text className="font-bold text-base text-foreground dark:text-dark-foreground mb-2">
-                {item.banco}
-              </Text>
-
-              {item.monedas.map((m) => (
-                <View
-                  key={m.moneda}
-                  className="flex-row justify-between items-center py-1"
-                >
-                  <Text className="text-muted-foreground dark:text-dark-muted-foreground">
-                    {m.moneda}
-                  </Text>
-
-                  <Text className="font-bold text-primary dark:text-dark-primary">
-                    {totalVenezuela(m.total)} {m.moneda === "VED" ? "Bs" : "$"}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-
-      {Platform.OS === "ios" && (
-        <Modal visible={dateModalVisible} transparent animationType="fade">
-          <BlurView
-            intensity={50}
-            tint="dark"
-            style={{ flex: 1, justifyContent: "flex-end" }}
-          >
-            <View className="bg-componentbg dark:bg-dark-componentbg p-4 rounded-t-2xl">
-              <DateTimePicker
-                value={planificacion.fechapagoautorizada}
-                mode="date"
-                minimumDate={new Date()}
-                display="spinner"
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    setPlanificacionPago({
-                      ...planificacion,
-                      fechapagoautorizada: selectedDate,
-                    });
-                  }
-                }}
-              />
-
-              <View className="flex-row justify-between mt-4">
-                <Pressable
-                  className="px-6 py-3 rounded-lg bg-error"
-                  onPress={() => setDateModalVisible(false)}
-                >
-                  <Text className="text-white font-bold">Cancelar</Text>
-                </Pressable>
-
-                <Pressable
-                  className="px-6 py-3 rounded-lg bg-primary dark:bg-dark-primary"
-                  onPress={() => setDateModalVisible(false)}
-                >
-                  <Text className="text-white font-bold">Confirmar</Text>
-                </Pressable>
-              </View>
-            </View>
-          </BlurView>
-        </Modal>
-      )}
-
-      {Platform.OS === "android" && dateModalVisible && (
-        <DateTimePicker
-          value={planificacion.fechapagoautorizada}
-          mode="date"
-          display="calendar"
-          minimumDate={new Date()}
-          onChange={(_, selectedDate) => {
-            setDateModalVisible(false);
-            if (selectedDate) {
-              setPlanificacionPago({
-                ...planificacion,
-                fechapagoautorizada: selectedDate,
-              });
-            }
+    <View className="absolute inset-0 z-50">
+      <BlurView intensity={50} tint="dark" className="absolute inset-0">
+        <TouchableOpacity
+          className="flex-1"
+          activeOpacity={1}
+          onPress={() => {
+            if (!isLoading) onClose();
           }}
         />
-      )}
+      </BlurView>
 
-      <View className="pt-4 gap-y-3">
-        <Pressable
-          className="py-4 rounded-xl items-center bg-primary dark:bg-dark-primary"
-          disabled={isLoading}
-          onPress={handleCreatePlan}
-        >
-          <Text className="text-white font-bold text-base">
-            {isLoading ? "Procesando..." : "Establecer definitivo"}
-          </Text>
-        </Pressable>
+      <Animated.View
+        className="bg-background dark:bg-background  rounded-3xl"
+        style={[
+          {
+            position: "absolute",
 
-        <Pressable
-          className={`py-4 rounded-xl border items-center ${
-            isLoading
-              ? "border-primary/40 dark:border-dark-primary/40"
-              : "border-primary dark:border-dark-primary"
-          }`}
-          disabled={isLoading}
-        >
-          <Text
-            className={`font-bold text-base ${
-              isLoading
-                ? "text-primary/50"
-                : "text-primary dark:text-dark-primary"
-            }`}
+            bottom: 100,
+            height: height * 0.7,
+            width: "90%",
+            padding: 16,
+            alignSelf: "center",
+          },
+          animatedStyle,
+        ]}
+      >
+        <ScrollView contentContainerClassName="gap-4 pt-2 pb-6">
+          {/* Descripción */}
+          <View className="gap-2">
+            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+              Descripción
+            </Text>
+
+            <CustomTextInput
+              placeholder="Descripción del plan"
+              value={planificacion.descripcionplan}
+              onChangeText={(text) =>
+                setPlanificacionPago({
+                  ...planificacion,
+                  descripcionplan: text,
+                })
+              }
+              numberOfLines={3}
+              multiline
+            />
+          </View>
+
+          {/* Fecha */}
+          <View className="gap-2">
+            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+              Fecha
+            </Text>
+
+            <Pressable
+              className="border border-gray-300 dark:border-gray-600 rounded-xl p-4"
+              onPress={() => {
+                if (!isLoading) {
+                  setTempDate(planificacion.fechapagoautorizada);
+                  setDateModalVisible(true);
+                }
+              }}
+            >
+              <Text className="text-base text-foreground dark:text-dark-foreground">
+                {planificacion.fechapagoautorizada.toLocaleDateString("es-VE", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Resumen */}
+          <View className="gap-3">
+            <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
+              Resumen
+            </Text>
+
+            {result.length === 0 && (
+              <View className="items-center py-6">
+                <Text className="text-muted-foreground dark:text-dark-muted-foreground">
+                  No hay montos válidos para planificar
+                </Text>
+              </View>
+            )}
+
+            {result.map((item) => (
+              <View
+                key={item.banco}
+                className="bg-componentbg dark:bg-dark-componentbg rounded-xl p-4"
+              >
+                <Text className="font-bold text-base text-foreground dark:text-dark-foreground mb-2">
+                  {item.banco}
+                </Text>
+
+                {item.monedas.map((m) => (
+                  <View
+                    key={m.moneda}
+                    className="flex-row justify-between items-center py-1"
+                  >
+                    <Text className="text-muted-foreground dark:text-dark-muted-foreground">
+                      {m.moneda}
+                    </Text>
+
+                    <Text className="font-bold text-primary dark:text-dark-primary">
+                      {totalVenezuela(m.total)}{" "}
+                      {m.moneda === "VED" ? "Bs" : "$"}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* Date picker iOS */}
+        {Platform.OS === "ios" && (
+          <Modal visible={dateModalVisible} transparent animationType="fade">
+            <BlurView
+              intensity={50}
+              tint="dark"
+              style={{ flex: 1, justifyContent: "flex-end" }}
+            >
+              <View className="bg-componentbg dark:bg-dark-componentbg p-4 rounded-t-2xl">
+                <DateTimePicker
+                  value={tempDate}
+                  mode="date"
+                  minimumDate={new Date()}
+                  display="spinner"
+                  onChange={(_, selectedDate) => {
+                    if (selectedDate) setTempDate(selectedDate);
+                  }}
+                />
+
+                <View className="flex-row justify-between mt-4">
+                  <Pressable
+                    className="px-6 py-3 rounded-lg bg-error"
+                    onPress={() => setDateModalVisible(false)}
+                  >
+                    <Text className="text-white font-bold">Cancelar</Text>
+                  </Pressable>
+
+                  <Pressable
+                    className="px-6 py-3 rounded-lg bg-primary dark:bg-dark-primary"
+                    onPress={() => {
+                      setPlanificacionPago({
+                        ...planificacion,
+                        fechapagoautorizada: tempDate,
+                      });
+                      setDateModalVisible(false);
+                    }}
+                  >
+                    <Text className="text-white font-bold">Confirmar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </BlurView>
+          </Modal>
+        )}
+
+        {/* Android picker */}
+        {Platform.OS === "android" && dateModalVisible && (
+          <DateTimePicker
+            value={planificacion.fechapagoautorizada}
+            mode="date"
+            display="calendar"
+            minimumDate={new Date()}
+            onChange={(_, selectedDate) => {
+              setDateModalVisible(false);
+              if (selectedDate) {
+                setPlanificacionPago({
+                  ...planificacion,
+                  fechapagoautorizada: selectedDate,
+                });
+              }
+            }}
+          />
+        )}
+
+        {/* Botones */}
+        <View className="pt-4 gap-y-3">
+          <Pressable
+            className="py-4 rounded-xl items-center bg-primary dark:bg-dark-primary"
+            disabled={isLoading}
+            onPress={handleCreatePlan}
           >
-            Descartar definitivo
-          </Text>
-        </Pressable>
+            <Text className="text-white font-bold text-base">
+              {isLoading ? "Procesando..." : "Establecer definitivo"}
+            </Text>
+          </Pressable>
 
-        <Pressable className="rounded-xl py-4 bg-error" onPress={onClose}>
-          <Text className="text-white text-center font-bold">Cancelar</Text>
-        </Pressable>
-      </View>
-    </BottomModal>
+          <Pressable
+            className="py-4 rounded-xl border items-center border-primary dark:border-dark-primary"
+            disabled={isLoading}
+          >
+            <Text className="font-bold text-base text-primary dark:text-dark-primary">
+              Descartar definitivo
+            </Text>
+          </Pressable>
+
+          <Pressable
+            className="rounded-xl py-4 bg-error"
+            disabled={isLoading}
+            onPress={() => {
+              if (!isLoading) onClose();
+            }}
+          >
+            <Text className="text-white text-center font-bold">Cancelar</Text>
+          </Pressable>
+        </View>
+      </Animated.View>
+    </View>
   );
 }

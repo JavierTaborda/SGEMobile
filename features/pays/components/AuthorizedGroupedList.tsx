@@ -1,17 +1,20 @@
 import { useThemeStore } from "@/stores/useThemeStore";
 import { appTheme } from "@/utils/appTheme";
-import { currencyDollar, currencyVED, totalVenezuela } from "@/utils/moneyFormat";
+import {
+  currencyDollar,
+  currencyVED,
+  totalVenezuela,
+} from "@/utils/moneyFormat";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { PlanPagos } from "../interfaces/PlanPagos";
 import { AuthorizedItem } from "./AuthItem";
-
 
 export interface AuthorizedGroupedListProps {
   data: {
@@ -44,7 +47,6 @@ function useExpand(open: boolean) {
     overflow: "hidden",
   }));
 }
-
 
 function ClaseGroup({
   empresa,
@@ -122,7 +124,7 @@ function EmpresaGroup({
   });
 
   return (
-    <View className="mb-5">
+    <View className="mb-1">
       <Pressable
         onPress={() => setOpen((prev) => !prev)}
         className="flex-row justify-between items-center p-4 rounded-2xl bg-componentbg dark:bg-dark-componentbg"
@@ -131,9 +133,7 @@ function EmpresaGroup({
           <MaterialCommunityIcons
             name={open ? "chevron-up" : "chevron-down"}
             size={22}
-            color={
-              isDark ? appTheme.dark.foreground : appTheme.foreground
-            }
+            color={isDark ? appTheme.dark.foreground : appTheme.foreground}
           />
           <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
             {empresa}
@@ -142,22 +142,14 @@ function EmpresaGroup({
         <View className="flex-row gap-6">
           {/* VED */}
           <View className="flex-col items-center">
-       
             <Text className="font-light text-primary dark:text-dark-primary">
-              
-              {totalVenezuela(totalsByCurrency["VED"] || 0)}
-              {" "}
-              {currencyVED}
+              {totalVenezuela(totalsByCurrency["VED"] || 0)} {currencyVED}
             </Text>
           </View>
           {/* USD */}
           <View className="flex-col items-center">
-           
             <Text className="font-light text-primary dark:text-dark-primary">
-              
-              {totalVenezuela(totalsByCurrency["USD"] || 0)}
-              {" "}
-              {currencyDollar}
+              {totalVenezuela(totalsByCurrency["USD"] || 0)} {currencyDollar}
             </Text>
           </View>
         </View>
