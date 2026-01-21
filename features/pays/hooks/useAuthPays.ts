@@ -1,6 +1,6 @@
 import { safeHaptic } from "@/utils/safeHaptics";
 import { useRefreshControl } from "@/utils/userRefreshControl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { groupAuthorizedPays } from "../helpers/groupAuthorizedPays";
 import { MethodPay } from "../interfaces/MethodPay";
@@ -22,6 +22,7 @@ export function useAuthPays(searchText: string) {
 
   const [methods, setMethods] = useState<MethodPay[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
   //Filters
 
@@ -54,7 +55,7 @@ export function useAuthPays(searchText: string) {
   const isCacheExpired = useMemo(() => {
     if (!lastSync) return true;
     const diff = Date.now() - lastSync;
-    return diff > 30 * 60 * 1000; // 30 minutes
+    return diff > 15 * 60 * 1000; // 15 minutes
   }, [lastSync]);
 
   // dynamic filter
@@ -193,45 +194,53 @@ export function useAuthPays(searchText: string) {
   };
 
   const loadData = useCallback(async () => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
     setError(null);
-
-    if (pays.length > 0) {
-      if (!isCacheExpired) {
-        Alert.alert(
-          "Documentos en caché disponibles",
-          "hay documentos actualizados con menos de 30 minutos de sincronización. ¿Desea mantener estos documentos o actualizar a los mas recientes. Se perderan los datos no guardados.?",
-          [
-            {
-              text: "Mantener ",
-              style: "cancel",
-              onPress: () => {
-                buildFilters(pays);
-                setLoading(false);
-              },
-            },
-            {
-              text: "Actualizar",
-              style: "destructive",
-              onPress: async () => {
-                await refreshData();
-              },
-            },
-          ],
-          { cancelable: true },
-        );
-      } else {
-        await refreshData();
-
-        buildFilters(pays);
-        setLoading(false);
-      }
+    if (pays.length === 0) {
+      await refreshData();
       return;
     }
+    if (!isCacheExpired) {
+      Alert.alert(
+        "Documentos en caché disponibles",
+        "Hay documentos sincronizados recientemente. ¿Desea mantenerlos o actualizar a los más recientes? Se perderán los cambios no guardados.",
+        [
+          {
+            text: "Mantener",
+            style: "cancel",
+            onPress: () => {
+              buildFilters(pays);
+              setLoading(false);
+            },
+          },
+          {
+            text: "Actualizar",
+            style: "destructive",
+            onPress: async () => {
+              await refreshData();
+            },
+          },
+        ],
+        { cancelable: true },
+      );
+      return;
+    }
+
+    await refreshData();
+    buildFilters(pays);
+    setLoading(false);
   }, [isCacheExpired]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    return () => {
+      hasLoadedRef.current = false;
+    };
+  }, []);
 
   const buildFilters = (data: PlanPagos[]) => {
     setFilterData({

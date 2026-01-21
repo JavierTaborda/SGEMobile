@@ -15,7 +15,7 @@ export default function CustomDrawerContent(props: any) {
       <View className="items-center py-3 border-b border-b-slate-300 dark:border-b-slate-800">
         <View className="w-20 h-20 rounded-full overflow-hidden">
           <Image
-            source={require("@/assets/images/Logo.png")}
+            source={require("@/assets/images/iconSGE.png")}
             className="w-full h-full"
             resizeMode="contain"
           />
@@ -36,7 +36,7 @@ export default function CustomDrawerContent(props: any) {
         <Text className="text-sm font-semibold  justify-center text-center text-foreground dark:text-dark-foreground mt-1 mb-1">
           plataforma SGE
         </Text>
-   
+
         <DrawerItem
           //emoji={emojis.package}
           //emoji={emojis.approved}
@@ -44,8 +44,8 @@ export default function CustomDrawerContent(props: any) {
           label="Aprobación Pedidos"
           href="/(main)/(tabs)/(orders)/orderApproval"
           currentPath={currentPath}
-        /> 
-        
+        />
+
         {/*
         <DrawerItem
           //emoji={emojis.list}
@@ -88,8 +88,6 @@ export default function CustomDrawerContent(props: any) {
           href="/(main)/(tabs)/(pays)/authPays"
           currentPath={currentPath}
         />
-
-        
       </View>
     </DrawerContentScrollView>
   );
