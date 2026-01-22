@@ -70,6 +70,13 @@ export default function AuthPayModal({
   const overlay = useOverlayStore();
 
   const handleCreatePlan = async () => {
+    if (!planificacion.descripcionplan.trim()) {
+      overlay.show("warning", {
+        title: "Atención",
+        subtitle: "La descripción del plan es requerida.",
+      });
+      return;
+    }
     if (isLoading) return;
 
     setIsLoading(true);
@@ -159,7 +166,7 @@ export default function AuthPayModal({
 
             bottom: 100,
             height: height * 0.7,
-            width: "90%",
+            width: "95%",
             padding: 16,
             alignSelf: "center",
           },

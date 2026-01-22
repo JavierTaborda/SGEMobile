@@ -1,7 +1,7 @@
 import { useOverlayStore } from "@/stores/useSuccessOverlayStore";
 import { safeHaptic } from "@/utils/safeHaptics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Dimensions,
   Pressable,
@@ -13,15 +13,18 @@ import {
 import ConfettiCannon from "react-native-confetti-cannon";
 import Animated, {
   Easing,
-  interpolate,
-  useAnimatedStyle,
+  FadeIn,
+  FadeOut,
   useSharedValue,
   withTiming,
+  ZoomIn,
+  ZoomOut,
 } from "react-native-reanimated";
 
 export default function Overlay() {
   const { visible, type, title, subtitle, hide } = useOverlayStore();
   const { width, height } = Dimensions.get("window");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const progress = useSharedValue(0);
 
@@ -37,22 +40,31 @@ export default function Overlay() {
     }
   }, [visible, type]);
 
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 1]),
-  }));
-
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 1]),
-    transform: [{ scale: interpolate(progress.value, [0, 1], [0.85, 1]) }],
-  }));
-
   //autohide
+
+  const startAutoHide = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    timerRef.current = setTimeout(() => {
+      hide();
+    }, 1700);
+  };
+
+  const stopAutoHide = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (visible) {
-      const t = setTimeout(hide, 1700);
-      return () => clearTimeout(t);
+      startAutoHide();
+    } else {
+      stopAutoHide();
     }
+
+    return stopAutoHide;
   }, [visible]);
 
   if (!visible) return null;
@@ -92,22 +104,28 @@ export default function Overlay() {
       <View pointerEvents="auto" style={StyleSheet.absoluteFillObject}>
         {/* BACKDROP */}
         <Animated.View
-          style={[StyleSheet.absoluteFillObject, backdropStyle]}
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(250)}
+          style={[StyleSheet.absoluteFillObject]}
           className="bg-black/70"
         />
 
         {/* CONTENT */}
         <View className="flex-1 justify-center items-center">
-          <Pressable onPress={hide}>
+          <Pressable
+            onPress={hide}
+            onLongPress={stopAutoHide}
+            onPressOut={startAutoHide}
+            delayLongPress={200}
+          >
             <Animated.View
-              style={[
-                contentStyle,
-                { width: width * 0.8, height: height * 0.4 },
-              ]}
-              className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-6 py-6 items-center gap-4 shadow-2xl justify-center"
+              entering={ZoomIn.duration(350).easing(Easing.out(Easing.cubic))}
+              exiting={ZoomOut.duration(250).easing(Easing.in(Easing.cubic))}
+              style={{ width: width * 0.8, height: height * 0.4 }}
+              className="bg-componentbg dark:bg-dark-componentbg rounded-3xl px-6 py-6 items-center gap-4 justify-center"
             >
               <Animated.View
-               className={`${config.color} shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center`}
+                className={`${config.color} shadow-sm w-24 h-24 rounded-full mb-4 justify-center items-center`}
               >
                 <MaterialCommunityIcons
                   name={config.icon}

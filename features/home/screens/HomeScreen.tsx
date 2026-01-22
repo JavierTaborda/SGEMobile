@@ -39,21 +39,25 @@ export default function HomeScreen() {
       color: "#4F46E5",
       gradientCenterColor: "#6366F1",
       focused: true,
+      text: "Excelente",
     },
     {
       value: 40,
       color: "#10B981",
       gradientCenterColor: "#34D399",
+      text: "Bueno",
     },
     {
       value: 10,
       color: "#F59E0B",
       gradientCenterColor: "#FBBF24",
+      text: "Regular",
     },
     {
       value: 3,
       color: "#EF4444",
       gradientCenterColor: "#F87171",
+      text: "Malo",
     },
   ];
 
@@ -70,10 +74,7 @@ export default function HomeScreen() {
             {emojis.user} Bienvenido
           </Text> */}
           <Text className="text-foreground dark:text-dark-foreground  text-xl font-bold">
-            Bienvenido
-          </Text>
-          <Text className="text-lg text-foreground dark:text-dark-foreground  font-semibold">
-            {name}
+            Bienvenido, {name}
           </Text>
           {/* <Text className="text-lg text-foreground dark:text-dark-foreground  font-semibold">
             {" "}
@@ -82,19 +83,9 @@ export default function HomeScreen() {
         </View>
 
         {/* Cards */}
-        <View className="flex-row flex-wrap justify-between gap-4 mb-4 pt-1">
-          <InfoCard
-            //icon={emojis.package}
-            title="Documentos autorizados"
-            value={totalPedidos}
-            //bgColor="bg-primary dark:bg-dark-primary"
-          />
-          <InfoCard
-            //icon={emojis.money}
-            title="Total "
-            value={`${totalVenezuela(totalNeto)} $`}
-            //bgColor="bg-secondary dark:bg-dark-secondary"
-          />
+        <View className="flex-row flex-wrap justify-between gap-4 mb-3 pt-1">
+          <InfoCard title="Documentos autorizados" value={totalPedidos} />
+          <InfoCard title="Total " value={`${totalVenezuela(totalNeto)} $`} />
         </View>
 
         {/* Charts */}
@@ -111,13 +102,14 @@ export default function HomeScreen() {
           isDark={isDark}
         /> */}
 
-        <View className="flex-1 items-center mt-4 mb-4">
+        <View className="flex-1 items-center mt-2 mb-2 rounded-3xl bg-componentbg dark:bg-dark-componentbg ">
           <PieChart
+            paddingVertical={16}
             data={pieData}
             donut
             showGradient
-            radius={120}
-            innerRadius={60}
+            radius={110}
+            innerRadius={55}
             innerCircleColor={"#232B5D"}
             centerLabelComponent={() => {
               return (
@@ -136,6 +128,30 @@ export default function HomeScreen() {
               );
             }}
           />
+          <View className=" w-full px-6">
+            {pieData.map((item, index) => (
+              <View
+                key={index}
+                className="flex-row items-center justify-between mb-2"
+              >
+                <View className="flex-row items-center gap-2">
+                  <View
+                    className="w-4 h-4 rounded-xl"
+                    style={{
+                      backgroundColor: item.color,
+                    }}
+                  />
+                  <Text className="text-foreground dark:text-dark-foreground text-sm">
+                    {item.text}
+                  </Text>
+                </View>
+
+                <Text className="text-foreground dark:text-dark-foreground font-semibold text-sm">
+                  {item.value}%
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         <View className="flex-row flex-wrap justify-between pt-4">
