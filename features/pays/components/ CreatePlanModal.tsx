@@ -22,6 +22,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { CreatePlanResponse } from "../interfaces/CreatePlanResponse";
 import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
 import type { PlanPagos } from "../interfaces/PlanPagos";
 
@@ -29,7 +30,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   items: PlanPagos[];
-  createPlan: (documents: PlanificacionPago) => Promise<boolean>;
+  createPlan: (documents: PlanificacionPago) => Promise<CreatePlanResponse>;
 }
 const { height, width } = Dimensions.get("window");
 export default function AuthPayModal({
@@ -83,10 +84,10 @@ export default function AuthPayModal({
     try {
       const success = await createPlan(planificacion);
 
-      if (success) {
+      if (success.success) {
         onClose();
         overlay.show("success", {
-          title: "Plan creado",
+          title: `Plan ${success.planpagonumero} creado`,
           subtitle: "Se ha creado el plan exitosamente.",
         });
       } else {

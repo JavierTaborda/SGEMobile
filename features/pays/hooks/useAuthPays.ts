@@ -3,6 +3,7 @@ import { useRefreshControl } from "@/utils/userRefreshControl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { groupAuthorizedPays } from "../helpers/groupAuthorizedPays";
+import { CreatePlanResponse } from "../interfaces/CreatePlanResponse";
 import { MethodPay } from "../interfaces/MethodPay";
 import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
 import { PlanPagos } from "../interfaces/PlanPagos";
@@ -256,7 +257,9 @@ export function useAuthPays(searchText: string) {
 
   const authorizedData = useMemo(() => {
     return groupAuthorizedPays(
-      filteredPays.filter((d) => d.autorizadopagar === 1),
+      //TODO: mostrar o no
+      // filteredPays.filter((d) => d.autorizadopagar === 1 && !d.planpagonumero),
+      filteredPays.filter((d) => d.autorizadopagar === 1 && !d.planpagonumero),
     );
   }, [filteredPays]);
 
@@ -319,15 +322,29 @@ export function useAuthPays(searchText: string) {
   };
   const createPlanPago = async (
     documents: PlanificacionPago,
-  ): Promise<boolean> => {
+  ): Promise<CreatePlanResponse> => {
     try {
-      const success: boolean = await createPlan(documents);
-      return success;
+      const result = await createPlan(documents);
+      if (result.success) {
+        applyPlanToDocuments(result.planpagonumero, documents.items);
+      }
+      return result;
     } catch (err) {
       setError("Ocurrió un error al cargar los datos.");
-      return false;
+      throw err;
     }
   };
+  const applyPlanToDocuments = useCallback(
+    (planNumber: number, docs: PlanPagos[]) => {
+      const updated = docs.map((doc) => ({
+        ...doc,
+        planpagonumero: planNumber,
+      }));
+
+      updatePays(updated);
+    },
+    [updatePays],
+  );
 
   return {
     pays,
@@ -373,5 +390,6 @@ export function useAuthPays(searchText: string) {
     appliedFiltersCount,
 
     createPlanPago,
+    applyPlanToDocuments,
   };
 }

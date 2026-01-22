@@ -142,7 +142,11 @@ export default function AuthPayCard({
                     }
                   `}
                 >
-                  {isAuth ? "Autorizado" : "No Autorizado"}
+                  {isAuth
+                    ? item.planpagonumero
+                      ? `Plan pago ${item.planpagonumero}`
+                      : "No Autorizado"
+                    : "No Autorizado"}
                 </Text>
               </View>
             </View>

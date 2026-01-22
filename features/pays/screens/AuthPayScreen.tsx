@@ -1,11 +1,6 @@
 import { Entypo, MaterialCommunityIcons, Octicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Dimensions,
-  Pressable,
-  Text,
-  View
-} from "react-native";
+import { Dimensions, Pressable, Text, View } from "react-native";
 import PagerView from "react-native-pager-view";
 import Animated, {
   useAnimatedStyle,
@@ -129,7 +124,7 @@ export default function AuthorizationScreen() {
         />
       );
     },
-    [selectionMode, selectedIds, toggleSelect]
+    [selectionMode, selectedIds, toggleSelect],
   );
   const handleCreatePlanSuccess = useCallback(() => {
     setCreatePlanModaleVisible(false);
@@ -138,14 +133,11 @@ export default function AuthorizationScreen() {
       pagerRef.current?.setPage(0);
       setTab("pending");
     });
-    refreshData()
-    
-    
+    //refreshData();
   }, []);
 
-
   if (loading) return <AuthPaySkeleton />;
-  if (error) return <ErrorView error={error} getData={handleRefresh} />;
+  if (error) return <ErrorView error={error} getData={refreshData} />;
 
   return (
     <>
@@ -263,7 +255,7 @@ export default function AuthorizationScreen() {
               showtitle
               title="Total autorizado"
               subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
-                totalAutorizadoUSD
+                totalAutorizadoUSD,
               )} $`}
               renderItem={renderItem}
             />
@@ -387,14 +379,13 @@ export default function AuthorizationScreen() {
           items={filteredPays}
           onClose={() => setCreatePlanModaleVisible(false)}
           createPlan={async (data) => {
-            const success = await createPlanPago(data);
+            const response = await createPlanPago(data);
 
-            if (success) {
-              
+            if (response.success) {
               handleCreatePlanSuccess();
             }
 
-            return success;
+            return response;
           }}
         />
       )}
