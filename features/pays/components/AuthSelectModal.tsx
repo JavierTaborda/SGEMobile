@@ -30,7 +30,6 @@ interface Props {
   items: PlanPagos[];
   methods: MethodPay[];
   onAuthorize: (authorizedItems: PlanPagos[]) => Promise<void>;
-
 }
 
 /* ----------------------- HELPERS ----------------------- */
@@ -40,7 +39,7 @@ function buildAuthorizedItems(
   currency: string,
   rate: number,
   customAmount?: number,
-  selectedMethod?: MethodPay
+  selectedMethod?: MethodPay,
 ): PlanPagos[] {
   return items.map((item, index) => {
     let montoautorizado =
@@ -96,7 +95,7 @@ function buildAuthorizedItems(
 function useAuthPayRules(
   items: PlanPagos[],
   methods: MethodPay[],
-  formaPago: string
+  formaPago: string,
 ) {
   return useMemo(() => {
     let hasUSD = false;
@@ -110,7 +109,7 @@ function useAuthPayRules(
     }
 
     const currentMethod = methods.find(
-      (m) => String(m.codigounico) === formaPago
+      (m) => String(m.codigounico) === formaPago,
     );
 
     const targetCurrency =
@@ -153,7 +152,6 @@ export default function AuthPayModal({
   methods,
   onAuthorize,
 }: Props) {
-  const [formaPago, setFormaPago] = useState("");
   const [tasa, setTasa] = useState<number>(0);
   const [customAuthorizedAmountRaw, setCustomAuthorizedAmountRaw] =
     useState("");
@@ -161,6 +159,13 @@ export default function AuthPayModal({
   const [isLoading, setIsLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
+  const firstMethodDefault = methods.find((d) =>
+    d.monedapago.startsWith(items[0].moneda),
+  )?.codigounico;
+
+  const [formaPago, setFormaPago] = useState(
+    firstMethodDefault?.toString() ?? "",
+  );
   const overlay = useOverlayStore();
   const expandAnim = useSharedValue(0);
 
@@ -217,7 +222,9 @@ export default function AuthPayModal({
       return original;
     }
 
-    return targetCurrency === "USD" ? original / tasa : original * tasa;
+    const value = targetCurrency === "USD" ? original / tasa : original * tasa;
+
+    return Math.round(value * 100) / 100;
   }, [items, tasa, targetCurrency, showSingleItemAmountInput]);
 
   const isValid = !!formaPago && (!requiresRate || tasa > 0);
@@ -276,10 +283,14 @@ export default function AuthPayModal({
     return isNaN(num) ? undefined : num;
   }, [customAuthorizedAmountRaw]);
 
+  function round2(num: number) {
+    return Math.round(num * 100) / 100;
+  }
+
   const exceedsAllowedAmount =
     customAmountNumber !== undefined &&
     maxAllowedAmount !== undefined &&
-    customAmountNumber > maxAllowedAmount;
+    round2(customAmountNumber) > round2(maxAllowedAmount);
 
   const handleAuthorize = useCallback(async () => {
     if (!isValid) {
@@ -291,8 +302,8 @@ export default function AuthPayModal({
       Alert.alert(
         "Monto excedido",
         `El monto autorizado no debe exceder ${totalVenezuela(
-          maxAllowedAmount!
-        )} ${targetCurrency}.`
+          maxAllowedAmount!,
+        )} ${targetCurrency}.`,
       );
       return;
     }
@@ -305,12 +316,12 @@ export default function AuthPayModal({
         targetCurrency,
         tasa,
         customAmountNumber,
-        currentMethod
+        currentMethod,
       );
 
       const totalAuthorized = authorizedItems.reduce(
         (sum, item) => sum + Number(item.montoautorizado),
-        0
+        0,
       );
 
       await onAuthorize(authorizedItems);
@@ -341,7 +352,6 @@ export default function AuthPayModal({
     overlay,
   ]);
   const handleUnAuthorize = useCallback(async () => {
-
     Alert.alert(
       "¿Cancelar autorización?",
       `Se cancelará la autorización de ${items.length} documento${items.length !== 1 ? "s" : ""}.`,
@@ -352,7 +362,7 @@ export default function AuthPayModal({
         },
         {
           text: "Sí, cancelar autorización",
-          style: "destructive", 
+          style: "destructive",
           onPress: async () => {
             setIsLoading(true);
 
@@ -379,9 +389,9 @@ export default function AuthPayModal({
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
-  }, [ items, ]);
+  }, [items]);
 
   if (!visible || items.length === 0) return null;
 
@@ -393,13 +403,16 @@ export default function AuthPayModal({
           <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
             Autorización de pagos
           </Text>
-          <Text className="text-base font-medium mt-1 text-foreground dark:text-dark-foreground">
-            {items[0]?.beneficiario ?? "—"}
-          </Text>
-          {items[0]?.observacion && (
-            <Text className="text-sm mt-1 text-mutedForeground dark:text-dark-mutedForeground">
-              {items[0].observacion}
-            </Text>
+          {items.length < 2 && (
+            <>
+              <Text className="text-base font-medium mt-1 text-foreground dark:text-dark-foreground">
+                {items[0]?.beneficiario ?? "—"}
+              </Text>
+
+              <Text className="text-sm mt-1 text-mutedForeground dark:text-dark-mutedForeground">
+                {items[0].observacion}
+              </Text>
+            </>
           )}
           <Text className="text-sm mt-1 text-mutedForeground dark:text-dark-mutedForeground">
             {items.length} documento{items.length !== 1 ? "s" : ""}
@@ -419,7 +432,7 @@ export default function AuthPayModal({
             <Text className="text-sm  text-mutedForeground dark:text-dark-mutedForeground">
               ≈{" "}
               {totalVenezuela(
-                targetCurrency === "USD" ? totals.ved : totals.usd
+                targetCurrency === "USD" ? totals.ved : totals.usd,
               )}{" "}
               {targetCurrency === "USD" ? "VED" : "USD"}
             </Text>
@@ -430,7 +443,7 @@ export default function AuthPayModal({
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-3 gap-y-2">
           <View>
             <Text className="text-lg font-bold mb-1 text-foreground dark:text-dark-foreground">
-              Forma de pago
+              Forma de pago {formaPago}
             </Text>
             <CustomPicker
               selectedValue={formaPago}
@@ -503,9 +516,33 @@ export default function AuthPayModal({
                       {item.observacion}
                     </Text>
                   )}
-                  <Text className="text-right font-bold mt-2 text-primary dark:text-dark-primary">
-                    {totalVenezuela(Number(item.montosaldo))} {item.moneda}
-                  </Text>
+                  <View className="flex-row justify-between  mt-1">
+                    <Text className="font-normal mt-2 text-foreground dark:text-dark-foreground">
+                      {totalVenezuela(Number(item.montosaldo))} {item.moneda}
+                    </Text>
+
+                    <Text className="font-bold mt-2 text-primary dark:text-dark-primary">
+                      {(() => {
+                        const original = Number(item.montosaldo);
+
+                        if (!currentMethod?.monedapago || tasa <= 0) {
+                          return "—";
+                        }
+
+                        let converted: number;
+
+                        if (item.moneda === currentMethod.monedapago) {
+                          converted = original;
+                        } else if (currentMethod.monedapago === "USD") {
+                          converted = original / tasa;
+                        } else {
+                          converted = original * tasa;
+                        }
+
+                        return `${totalVenezuela(converted)} ${currentMethod.monedapago}`;
+                      })()}
+                    </Text>
+                  </View>
                 </View>
               )}
             />
@@ -550,10 +587,7 @@ export default function AuthPayModal({
             </Text>
           </Pressable>
         )}
-        <Pressable
-          className="rounded-xl py-4 bg-error"
-          onPress={onClose}
-        >
+        <Pressable className="rounded-xl py-4 bg-error" onPress={onClose}>
           <Text className="text-white text-center font-bold">Cancelar</Text>
         </Pressable>
       </View>

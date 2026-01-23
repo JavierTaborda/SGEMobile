@@ -44,8 +44,18 @@ export default function AuthPayModal({
   const [isLoading, setIsLoading] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
 
+  const dateDefault = new Date();
+
+  const formattedDate = dateDefault.toLocaleDateString("es-VE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const defaultDesc = `PLANIFICACIÓN DE PAGO AL ${formattedDate}`;
+
   const [planificacion, setPlanificacionPago] = useState<PlanificacionPago>({
-    descripcionplan: "",
+    descripcionplan: defaultDesc,
     unidad: "",
     empresa: "",
     owneruser: 0,
@@ -62,7 +72,7 @@ export default function AuthPayModal({
     totalxpagarusd: 0,
     generadotxt: false,
     conciliadopago: false,
-    fechapagoautorizada: new Date(),
+    fechapagoautorizada: dateDefault,
     items,
   });
 
@@ -78,11 +88,16 @@ export default function AuthPayModal({
       });
       return;
     }
-    if (isLoading) return;
 
+    if (isLoading) return;
     setIsLoading(true);
+
     try {
-      const success = await createPlan(planificacion);
+      const planConTotales: PlanificacionPago = {
+        ...planificacion,
+      };
+
+      const success = await createPlan(planConTotales);
 
       if (success.success) {
         onClose();

@@ -7,7 +7,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { dateMonthText } from "@/utils/datesFormat";
 import {
   currencyDollar,
   currencyVES,
@@ -145,7 +144,7 @@ export default function AuthPayCard({
                   {isAuth
                     ? item.planpagonumero
                       ? `Plan pago ${item.planpagonumero}`
-                      : "No Autorizado"
+                      : "Autorizado"
                     : "No Autorizado"}
                 </Text>
               </View>
@@ -165,31 +164,9 @@ export default function AuthPayCard({
               </View>
             </View>
 
-            {/* Meta */}
-            <View className="space-y-1">
-              {isAuth && (
-                <Text
-                  numberOfLines={1}
-                  className="text-sm  text-gray-500 dark:text-gray-400 overflow-hidden"
-                >
-                  Autorizado con{" "}
-                  <Text className="font-medium text-xs text-foreground dark:text-dark-foreground ">
-                    {item.metodopago} {item.empresapagadora} {item.bancopagador}
-                  </Text>
-                </Text>
-              )}
-
-              <Text className="text-sm  text-gray-500 dark:text-gray-400">
-                Fecha{" "}
-                <Text className="font-medium text-foreground dark:text-dark-foreground">
-                  {dateMonthText(item.fechaemision.toString())}
-                </Text>
-              </Text>
-            </View>
-
             {/* Amounts */}
             <View
-              className={`rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 gap-y-1 my-1 `}
+              className={`rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 gap-y-1 my-2 `}
             >
               <View className={`flex-row justify-between `}>
                 <View>
@@ -245,7 +222,25 @@ export default function AuthPayCard({
                 </View>
               )}
             </View>
-
+            <View className="space-y-1">
+              {/* <Text className="text-sm  text-gray-500 dark:text-gray-400">
+                Fecha{" "}
+                <Text className="font-medium text-foreground dark:text-dark-foreground">
+                  {dateMonthText(item.fechaemision.toString())}
+                </Text>
+              </Text> */}
+              {isAuth && (
+                <Text
+                  numberOfLines={1}
+                  className="text-sm  text-gray-500 dark:text-gray-400 overflow-hidden"
+                >
+                  Autorizado pagar con{" "}
+                  <Text className="font-medium text-xs text-foreground dark:text-dark-foreground ">
+                    {item.metodopago} {item.empresapagadora} {item.bancopagador}
+                  </Text>
+                </Text>
+              )}
+            </View>
             {/* Obs */}
             <View className="space-y-1">
               {!isAuth && (

@@ -71,6 +71,7 @@ export default function AuthorizationScreen() {
     setCreatePlanModaleVisible,
     createPlanPago,
     refreshData,
+    totalDocumentsPlan,
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -126,6 +127,7 @@ export default function AuthorizationScreen() {
     },
     [selectionMode, selectedIds, toggleSelect],
   );
+
   const handleCreatePlanSuccess = useCallback(() => {
     setCreatePlanModaleVisible(false);
 
@@ -290,7 +292,7 @@ export default function AuthorizationScreen() {
               </Text>
             </View>
 
-            {totalDocumentsAuth > 0 ? (
+            {totalDocumentsPlan > 0 ? (
               <>
                 <AuthorizedGroupedList data={authorizedData} />
                 <View
@@ -302,7 +304,7 @@ export default function AuthorizationScreen() {
                   }}
                 >
                   <Pressable
-                    disabled={totalDocumentsAuth < 1}
+                    disabled={totalDocumentsPlan < 1}
                     onPress={() => setCreatePlanModaleVisible(true)}
                     className={`py-4 rounded-3xl items-center bg-primary dark:bg-dark-primary`}
                   >
@@ -376,7 +378,9 @@ export default function AuthorizationScreen() {
       {createPlanModaleVisible && (
         <CreatePlanModal
           visible={createPlanModaleVisible}
-          items={filteredPays}
+          items={filteredPays.filter(
+            (d) => d.autorizadopagar === 1 && !d.planpagonumero,
+          )}
           onClose={() => setCreatePlanModaleVisible(false)}
           createPlan={async (data) => {
             const response = await createPlanPago(data);

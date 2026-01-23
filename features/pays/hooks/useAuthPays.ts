@@ -139,6 +139,9 @@ export function useAuthPays(searchText: string) {
   const totalDocumentsUnAuth = useMemo(() => {
     return filteredPays.filter((d) => d.autorizadopagar === 0).length;
   }, [filteredPays]);
+  const totalDocumentsPlan = useMemo(() => {
+    return filteredPays.filter((d) => d.autorizadopagar === 1 && !d.planpagonumero).length;
+  }, [filteredPays]);
 
   const appliedFiltersCount = useMemo(() => {
     return Object.values(selectedFilters).filter(
@@ -289,6 +292,7 @@ export function useAuthPays(searchText: string) {
     [filteredPays, selectedIds],
   );
 
+
   const toggleSelect = useCallback((item: PlanPagos) => {
     safeHaptic("selection");
     setSelectionMode(true);
@@ -321,12 +325,66 @@ export function useAuthPays(searchText: string) {
     });
   };
   const createPlanPago = async (
-    documents: PlanificacionPago,
+    planToCreate: PlanificacionPago,
   ): Promise<CreatePlanResponse> => {
     try {
-      const result = await createPlan(documents);
+      const totals = planToCreate.items.reduce(
+        (acc, item) => {
+          const isUSD = item.moneda?.startsWith("USD");
+
+          const neto = Number(item.montoneto) || 0;
+          const saldo = Number(item.montosaldo) || 0;
+          const auth = Number(item.montoautorizado) || 0;
+          const xpagado = Number(item.montoautorizado) || 0;
+
+          if (isUSD) {
+            acc.totalnetousd += neto;
+            acc.totalsaldousd += saldo;
+            acc.totalautorizadobsd += auth;
+            if (item.pagado === 1) {
+              acc.totalpagadobsd += xpagado;
+            } else {
+              acc.totalxpagarbsd += xpagado;
+            }
+          } else {
+            acc.totalnetobsd += neto;
+            acc.totalsaldobsd += saldo;
+            acc.totalautorizadobsd += auth;
+            if (item.pagado === 1) {
+              acc.totalpagadobsd += xpagado;
+            } else {
+              acc.totalxpagarbsd += xpagado;
+            }
+          }
+
+          return acc;
+        },
+        {
+          totalnetobsd: 0,
+          totalnetousd: 0,
+          totalsaldobsd: 0,
+          totalsaldousd: 0,
+          totalautorizadobsd: 0,
+          totalautorizadousd: 0,
+          totalpagadobsd: 0,
+          totalpagadousd: 0,
+          totalxpagarbsd: 0,
+          totalxpagarusd: 0,
+        },
+      );
+
+      const planFinal:PlanificacionPago ={
+        ...planToCreate,
+        unidad: planToCreate.items[0].unidad,
+        empresa: planToCreate.items[0].empresa,
+        ...totals 
+      }
+      console.log(planFinal)
+
+      const result = await createPlan(planFinal);
+
       if (result.success) {
-        applyPlanToDocuments(result.planpagonumero, documents.items);
+        applyPlanToDocuments(result.planpagonumero, planFinal.items);
       }
       return result;
     } catch (err) {
@@ -345,6 +403,7 @@ export function useAuthPays(searchText: string) {
     },
     [updatePays],
   );
+
 
   return {
     pays,
@@ -391,5 +450,6 @@ export function useAuthPays(searchText: string) {
 
     createPlanPago,
     applyPlanToDocuments,
+    totalDocumentsPlan
   };
 }
