@@ -61,6 +61,7 @@ function buildAuthorizedItems(
       metodopago: selectedMethod?.textList ?? "",
       empresapagadora: selectedMethod?.empresapagadora ?? "",
       bancopagador: selectedMethod?.bancopago ?? "",
+       codigounico: selectedMethod?.codigounico ?? 0,
 
       planpagonumero: 0,
       autorizadonumero: 0,
@@ -70,7 +71,7 @@ function buildAuthorizedItems(
       autorizadopor: null,
       pagado: 0,
       fechapagado: null,
-      codigounico: 0,
+     
       generadotxt: 0,
       enviadocajachica: 0,
       conciliadopago: 0,
@@ -141,6 +142,7 @@ function buildUnAuthorizedItems(items: PlanPagos[]): PlanPagos[] {
     bancopagador: "",
     planpagonumero: 0,
     autorizadonumero: 0,
+    codigounico: 0,
   }));
 }
 /* ----------------------- MAIN COMPONENT ----------------------- */

@@ -27,7 +27,7 @@ export default function PayFilterModal({
   const [filters, setFilters] = useState<SelectedFilters>(selectedFilters);
 
   const handleApply = () => {
-  
+
     onApply(filters);
     onClose()
   };
@@ -60,12 +60,12 @@ export default function PayFilterModal({
           selectedValue={filters.selectedCompany}
           onSelect={(v) => setFilters({ ...filters, selectedCompany: v })}
         />
-        <ScrollSelect
+        {/* <ScrollSelect
           label="Unidad"
           options={filterData.unidad}
           selectedValue={filters.selectedUnidad}
           onSelect={(v) => setFilters({ ...filters, selectedUnidad: v })}
-        />
+        /> */}
 
         <ScrollSelect
           label="Clase de gasto"

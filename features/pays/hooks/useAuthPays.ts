@@ -379,7 +379,7 @@ export function useAuthPays(searchText: string) {
         empresa: planToCreate.items[0].empresa,
         ...totals 
       }
-      console.log(planFinal)
+    
 
       const result = await createPlan(planFinal);
 
