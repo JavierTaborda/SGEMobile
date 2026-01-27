@@ -44,8 +44,8 @@ function buildAuthorizedItems(
   return items.map((item, index) => {
     let montoautorizado =
       currency === "USD"
-        ? Number(item.montosaldo) / (item.moneda === "USD" ? 1 : rate)
-        : Number(item.montosaldo) * (item.moneda === "USD" ? rate : 1);
+        ? Number(item.montoneto) / (item.moneda === "USD" ? 1 : rate)
+        : Number(item.montoneto) * (item.moneda === "USD" ? rate : 1);
 
     // Override only first item if custom amount is provided
     if (index === 0 && customAmount !== undefined && customAmount > 0) {
@@ -61,33 +61,32 @@ function buildAuthorizedItems(
       metodopago: selectedMethod?.textList ?? "",
       empresapagadora: selectedMethod?.empresapagadora ?? "",
       bancopagador: selectedMethod?.bancopago ?? "",
-       codigounico: selectedMethod?.codigounico ?? 0,
-
+      codigounico: selectedMethod?.codigounico ?? 0,
+      fechaautorizadopor: new Date(),
+      autorizadopor: null, //TODO define
       planpagonumero: 0,
       autorizadonumero: 0,
       codigobanco: null,
       codigoswift: null,
-      fechaautorizadopor: null,
-      autorizadopor: null,
-      pagado: 0,
+      pagado: false,
       fechapagado: null,
-     
-      generadotxt: 0,
-      enviadocajachica: 0,
-      conciliadopago: 0,
+
+      generadotxt: false,
+      enviadocajachica: false,
+      conciliadopago: false,
       cob_num: 0,
       moneda_pago: null,
       monto_pago: 0,
-      cantidadSKU: null,
-      unidades: null,
-      origen: null,
-      numeroPOOdoo: null,
-      linkseleccion: null,
+      cantidadSKU: 0,
+      unidades: 0,
+      origen: "",
+      numeroPOOdoo: "",
+      linkseleccion: "",
       categoria: null,
-      temporada: null,
-      estatuscompras: null,
+      temporada: "",
+      estatuscompras: "",
       fechacompras: null,
-      estatuslogistico: null,
+      estatuslogistico: "",
       fechalogistico: null,
     };
   });
@@ -183,7 +182,8 @@ export default function AuthPayModal({
     let usd = 0;
 
     for (const item of items) {
-      const monto = Number(item.montosaldo);
+      const monto = Number(item.montoneto);
+
       if (item.moneda === "VED") {
         ved += monto;
         usd += monto / tasa;
@@ -204,7 +204,7 @@ export default function AuthPayModal({
   const suggestedAmount = useMemo(() => {
     if (!showSingleItemAmountInput || !items[0]) return "";
 
-    const originalAmount = Number(items[0].montosaldo);
+    const originalAmount = Number(items[0].montoneto);
     const originalCurrency = items[0].moneda;
 
     if (originalCurrency === targetCurrency) return originalAmount.toFixed(2);
@@ -218,7 +218,7 @@ export default function AuthPayModal({
   const maxAllowedAmount = useMemo(() => {
     if (!showSingleItemAmountInput || !items[0] || tasa <= 0) return undefined;
 
-    const original = Number(items[0].montosaldo);
+    const original = Number(items[0].montoneto);
 
     if (items[0].moneda === targetCurrency) {
       return original;
@@ -520,12 +520,12 @@ export default function AuthPayModal({
                   )}
                   <View className="flex-row justify-between  mt-1">
                     <Text className="font-normal mt-2 text-foreground dark:text-dark-foreground">
-                      {totalVenezuela(Number(item.montosaldo))} {item.moneda}
+                      {totalVenezuela(Number(item.montoneto))} {item.moneda}
                     </Text>
 
                     <Text className="font-bold mt-2 text-primary dark:text-dark-primary">
                       {(() => {
-                        const original = Number(item.montosaldo);
+                        const original = Number(item.montoneto);
 
                         if (!currentMethod?.monedapago || tasa <= 0) {
                           return "—";

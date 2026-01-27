@@ -72,6 +72,7 @@ export default function AuthorizationScreen() {
     createPlanPago,
     refreshData,
     totalDocumentsPlan,
+    loadData,
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -139,7 +140,7 @@ export default function AuthorizationScreen() {
   }, []);
 
   if (loading) return <AuthPaySkeleton />;
-  if (error) return <ErrorView error={error} getData={refreshData} />;
+  if (error) return <ErrorView error={error} getData={loadData} />;
 
   return (
     <>

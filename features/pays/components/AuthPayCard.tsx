@@ -174,7 +174,7 @@ export default function AuthPayCard({
                     Total saldo
                   </Text>
                   <Text className="text-lg font-semibold text-black dark:text-white">
-                    {totalVenezuela(item.montoneto)}{" "}
+                    {totalVenezuela(item?.montoneto ?? 0)}{" "}
                     {item.moneda === "VED" ? "VED" : currencyDollar}
                   </Text>
                 </View>
@@ -184,7 +184,7 @@ export default function AuthPayCard({
                     Tasa
                   </Text>
                   <Text className="text-sm font-medium text-black dark:text-white">
-                    {totalVenezuela(item.tasacambio)}
+                    {totalVenezuela(item?.tasacambio ?? 0)}
                   </Text>
                 </View>
               </View>

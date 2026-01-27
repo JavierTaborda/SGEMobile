@@ -328,58 +328,58 @@ export function useAuthPays(searchText: string) {
     planToCreate: PlanificacionPago,
   ): Promise<CreatePlanResponse> => {
     try {
-      const totals = planToCreate.items.reduce(
-        (acc, item) => {
-          const isUSD = item.moneda?.startsWith("USD");
+      // const totals = planToCreate.items.reduce(
+      //   (acc, item) => {
+      //     const isUSD = item.moneda?.startsWith("USD");
 
-          const neto = Number(item.montoneto) || 0;
-          const saldo = Number(item.montosaldo) || 0;
-          const auth = Number(item.montoautorizado) || 0;
-          const xpagado = Number(item.montoautorizado) || 0;
+      //     const neto = Number(item.montoneto) || 0;
+      //     const saldo = Number(item.montosaldo) || 0;
+      //     const auth = Number(item.montoautorizado) || 0;
+      //     const xpagado = Number(item.montoautorizado) || 0;
 
-          if (isUSD) {
-            acc.totalnetousd += neto;
-            acc.totalsaldousd += saldo;
-            acc.totalautorizadobsd += auth;
-            if (item.pagado === 1) {
-              acc.totalpagadobsd += xpagado;
-            } else {
-              acc.totalxpagarbsd += xpagado;
-            }
-          } else {
-            acc.totalnetobsd += neto;
-            acc.totalsaldobsd += saldo;
-            acc.totalautorizadobsd += auth;
-            if (item.pagado === 1) {
-              acc.totalpagadobsd += xpagado;
-            } else {
-              acc.totalxpagarbsd += xpagado;
-            }
-          }
+      //     if (isUSD) {
+      //       acc.totalnetousd += neto;
+      //       acc.totalsaldousd += saldo;
+      //       acc.totalautorizadobsd += auth;
+      //       if (item.pagado) {
+      //         acc.totalpagadobsd += xpagado;
+      //       } else {
+      //         acc.totalxpagarbsd += xpagado;
+      //       }
+      //     } else {
+      //       acc.totalnetobsd += neto;
+      //       acc.totalsaldobsd += saldo;
+      //       acc.totalautorizadobsd += auth;
+      //       if (item.pagado ) {
+      //         acc.totalpagadobsd += xpagado;
+      //       } else {
+      //         acc.totalxpagarbsd += xpagado;
+      //       }
+      //     }
 
-          return acc;
-        },
-        {
-          totalnetobsd: 0,
-          totalnetousd: 0,
-          totalsaldobsd: 0,
-          totalsaldousd: 0,
-          totalautorizadobsd: 0,
-          totalautorizadousd: 0,
-          totalpagadobsd: 0,
-          totalpagadousd: 0,
-          totalxpagarbsd: 0,
-          totalxpagarusd: 0,
-        },
-      );
+      //     return acc;
+      //   },
+      //   {
+      //     totalnetobsd: 0,
+      //     totalnetousd: 0,
+      //     totalsaldobsd: 0,
+      //     totalsaldousd: 0,
+      //     totalautorizadobsd: 0,
+      //     totalautorizadousd: 0,
+      //     totalpagadobsd: 0,
+      //     totalpagadousd: 0,
+      //     totalxpagarbsd: 0,
+      //     totalxpagarusd: 0,
+      //   },
+      // );
 
       const planFinal:PlanificacionPago ={
         ...planToCreate,
         unidad: planToCreate.items[0].unidad,
         empresa: planToCreate.items[0].empresa,
-        ...totals 
+       // ...totals 
       }
-    
+           
 
       const result = await createPlan(planFinal);
 
@@ -450,6 +450,7 @@ export function useAuthPays(searchText: string) {
 
     createPlanPago,
     applyPlanToDocuments,
-    totalDocumentsPlan
+    totalDocumentsPlan,
+    loadData
   };
 }
