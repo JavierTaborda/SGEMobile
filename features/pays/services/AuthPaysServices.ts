@@ -1,6 +1,7 @@
 import API from "@/lib/axios";
 import { PlanPagos } from "../interfaces/PlanPagos";
 import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
+import { CodeSwift } from "../interfaces/SwiftCode";
 //import AuthPayData from '../data/AuthPayData.json';
 
 export const getPaysToAuthorize = async () => {
@@ -12,6 +13,11 @@ export const getPaysToAuthorize = async () => {
 
 export const getMethodPays = async () => {
   const response = await API.get("/pays/methods");
+  return response.data;
+};
+
+export const getSwiftCodes = async ():Promise<CodeSwift[]> => {
+  const response = await API.get("/pays/swift");
   return response.data;
 };
 export const authDocuments = async () => {

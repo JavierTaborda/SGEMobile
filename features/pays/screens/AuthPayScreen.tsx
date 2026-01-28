@@ -73,6 +73,8 @@ export default function AuthorizationScreen() {
     refreshData,
     totalDocumentsPlan,
     loadData,
+    buildAuthorizedItems,
+    buildUnAuthorizedItems,
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -140,7 +142,7 @@ export default function AuthorizationScreen() {
   }, []);
 
   if (loading) return <AuthPaySkeleton />;
-  if (error) return <ErrorView error={error} getData={loadData} />;
+  if (error) return <ErrorView error={error} getData={handleRefresh} />;
 
   return (
     <>
@@ -374,6 +376,8 @@ export default function AuthorizationScreen() {
           methods={methods}
           onClose={() => setAuthSelectModalVisible(false)}
           onAuthorize={udapteDocuments}
+          buildAuthorizedItems={buildAuthorizedItems}
+          buildUnAuthorizedItems={buildUnAuthorizedItems}
         />
       )}
       {createPlanModaleVisible && (

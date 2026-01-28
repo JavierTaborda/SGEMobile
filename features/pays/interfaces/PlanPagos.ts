@@ -18,7 +18,7 @@ export interface PlanPagos  {
     fechaemision: string | Date;
     fechavencimiento: string | Date;
     fecharegistro: string | Date;
-    numerofactura: string | number;
+    numerofactura: string;
     observacion?: string | null;
     tasacambio: string | number;
     moneda: string;

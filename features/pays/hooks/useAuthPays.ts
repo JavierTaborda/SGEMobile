@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/stores/useAuthStore";
 import { safeHaptic } from "@/utils/safeHaptics";
 import { useRefreshControl } from "@/utils/userRefreshControl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -7,10 +8,12 @@ import { CreatePlanResponse } from "../interfaces/CreatePlanResponse";
 import { MethodPay } from "../interfaces/MethodPay";
 import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
 import { PlanPagos } from "../interfaces/PlanPagos";
+import { CodeSwift } from "../interfaces/SwiftCode";
 import {
   createPlan,
   getMethodPays,
   getPaysToAuthorize,
+  getSwiftCodes,
 } from "../services/AuthPaysServices";
 import { useAuthPaysStore } from "../stores/useAuthPaysStore";
 import { FilterData, SelectedFilters } from "../types/Filters";
@@ -22,8 +25,10 @@ export function useAuthPays(searchText: string) {
   const lastSync = useAuthPaysStore((s) => s.lastSync);
 
   const [methods, setMethods] = useState<MethodPay[]>([]);
+  const [swiftCode, setSwiftCode] = useState<CodeSwift[]>([]);
   const [loading, setLoading] = useState(true);
   const hasLoadedRef = useRef(false);
+  const { name } = useAuthStore();
 
   //Filters
 
@@ -63,7 +68,7 @@ export function useAuthPays(searchText: string) {
   const filteredPays = useMemo(() => {
     return pays.filter((item) => {
       // by text
-      const matchesSearch = `${item.observacion} ${item.beneficiario}`
+      const matchesSearch = `${item.observacion} ${item.beneficiario} ${item.tipodocumento}-${item.numerodocumento}`
         .toLowerCase()
         .includes(searchText.toLowerCase());
 
@@ -173,8 +178,13 @@ export function useAuthPays(searchText: string) {
           { cancelable: true },
         );
 
-        const methodsData = await getMethodPays();
+        const [methodsData, swiftCode] = await Promise.all([
+
+          getMethodPays(),
+          getSwiftCodes(),
+        ]);
         setMethods(methodsData);
+        setSwiftCode(swiftCode);
       },
       () => setError("Ocurrió un error al cargar los datos..."),
     );
@@ -182,14 +192,18 @@ export function useAuthPays(searchText: string) {
 
   const refreshData = async () => {
     try {
-      const [paysData, methodsData] = await Promise.all([
+      const [paysData, methodsData, swiftCode] = await Promise.all([
         getPaysToAuthorize(),
         getMethodPays(),
+        getSwiftCodes(),
       ]);
       setPays(paysData);
       setMethods(methodsData);
+      setSwiftCode(swiftCode)
+
 
       buildFilters(paysData);
+      setError("")
     } catch (err) {
       setError("Ocurrió un error al cargar los datos.");
     } finally {
@@ -260,7 +274,7 @@ export function useAuthPays(searchText: string) {
 
   const authorizedData = useMemo(() => {
     return groupAuthorizedPays(
-      //TODO: mostrar o no
+
       // filteredPays.filter((d) => d.autorizadopagar === 1 && !d.planpagonumero),
       filteredPays.filter((d) => d.autorizadopagar === 1 && !d.planpagonumero),
     );
@@ -328,58 +342,16 @@ export function useAuthPays(searchText: string) {
     planToCreate: PlanificacionPago,
   ): Promise<CreatePlanResponse> => {
     try {
-      // const totals = planToCreate.items.reduce(
-      //   (acc, item) => {
-      //     const isUSD = item.moneda?.startsWith("USD");
 
-      //     const neto = Number(item.montoneto) || 0;
-      //     const saldo = Number(item.montosaldo) || 0;
-      //     const auth = Number(item.montoautorizado) || 0;
-      //     const xpagado = Number(item.montoautorizado) || 0;
 
-      //     if (isUSD) {
-      //       acc.totalnetousd += neto;
-      //       acc.totalsaldousd += saldo;
-      //       acc.totalautorizadobsd += auth;
-      //       if (item.pagado) {
-      //         acc.totalpagadobsd += xpagado;
-      //       } else {
-      //         acc.totalxpagarbsd += xpagado;
-      //       }
-      //     } else {
-      //       acc.totalnetobsd += neto;
-      //       acc.totalsaldobsd += saldo;
-      //       acc.totalautorizadobsd += auth;
-      //       if (item.pagado ) {
-      //         acc.totalpagadobsd += xpagado;
-      //       } else {
-      //         acc.totalxpagarbsd += xpagado;
-      //       }
-      //     }
-
-      //     return acc;
-      //   },
-      //   {
-      //     totalnetobsd: 0,
-      //     totalnetousd: 0,
-      //     totalsaldobsd: 0,
-      //     totalsaldousd: 0,
-      //     totalautorizadobsd: 0,
-      //     totalautorizadousd: 0,
-      //     totalpagadobsd: 0,
-      //     totalpagadousd: 0,
-      //     totalxpagarbsd: 0,
-      //     totalxpagarusd: 0,
-      //   },
-      // );
-
-      const planFinal:PlanificacionPago ={
+      const planFinal: PlanificacionPago = {
         ...planToCreate,
-        unidad: planToCreate.items[0].unidad,
-        empresa: planToCreate.items[0].empresa,
-       // ...totals 
+        owneruser: planToCreate.items[0].owneruser,
+        autorizadopor: name,
+        fechaautorizadopor: new Date()
+        // ...totals 
       }
-           
+
 
       const result = await createPlan(planFinal);
 
@@ -403,6 +375,81 @@ export function useAuthPays(searchText: string) {
     },
     [updatePays],
   );
+
+  //Build auth documents 
+
+  function buildAuthorizedItems(
+    items: PlanPagos[],
+    currency: string,
+    rate: number,
+    customAmount?: number,
+    selectedMethod?: MethodPay,
+  ): PlanPagos[] {
+
+    const now = new Date();
+
+
+
+    return items.map((item, index) => {
+      let montoautorizado =
+        currency === "USD"
+          ? Number(item.montoneto) / (item.moneda === "USD" ? 1 : rate)
+          : Number(item.montoneto) * (item.moneda === "USD" ? rate : 1);
+
+      if (index === 0 && customAmount && customAmount > 0) {
+        montoautorizado = customAmount;
+      }
+      const metodo = currency === "USD" ? "DOLARES" : "BOLIVARES";
+
+      const titularCuenta =
+        item.titularcuenta || item.beneficiario;
+      const swift = swiftCode.find((s => s.codigobanco === item.cuentabanco?.slice(0, 4)))?.codigoswift
+
+
+      return {
+        ...item,
+        monedaautorizada: currency,
+        tasaautorizada: rate,
+        montoautorizado,
+        autorizadopagar: 1,
+        metodopago: metodo ?? "",
+        empresapagadora: selectedMethod?.empresapagadora ?? "",
+        bancopagador: selectedMethod?.bancopago ?? "",
+        codigounico: selectedMethod?.codigounico ?? 0,
+        fechaautorizadopor: now,
+        autorizadopor: name,
+        titularcuenta: titularCuenta,
+        codigoswift: swift,
+
+        planpagonumero: 0,
+        autorizadonumero: 0,
+        pagado: false,
+        fechapagado: null,
+
+        generadotxt: false,
+        enviadocajachica: false,
+        conciliadopago: false,
+      };
+    });
+  }
+  function buildUnAuthorizedItems(items: PlanPagos[]): PlanPagos[] {
+    return items.map((item) => ({
+      ...item,
+      autorizadopagar: 0,
+      monedaautorizada: null,
+      tasaautorizada: 0,
+      montoautorizado: 0,
+      metodopago: "",
+      empresapagadora: "",
+      bancopagador: "",
+      planpagonumero: 0,
+      autorizadonumero: 0,
+      codigounico: 0,
+      autorizadopor: "",
+      fechaautorizadopor: null
+
+    }));
+  }
 
 
   return {
@@ -451,6 +498,8 @@ export function useAuthPays(searchText: string) {
     createPlanPago,
     applyPlanToDocuments,
     totalDocumentsPlan,
-    loadData
+    loadData,
+    buildAuthorizedItems,
+    buildUnAuthorizedItems
   };
 }
