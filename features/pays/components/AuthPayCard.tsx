@@ -257,7 +257,7 @@ export default function AuthPayCard({
                 numberOfLines={2}
                 className="text-xs  text-gray-500 dark:text-gray-400 overflow-hidden"
               >
-                {item.observacion}
+                {item.tipodocumento}-{item.numerodocumento} - {item.observacion}
               </Text>
             </View>
           </View>

@@ -401,9 +401,9 @@ export function useAuthPays(searchText: string) {
       }
       const metodo = currency === "USD" ? "DOLARES" : "BOLIVARES";
 
-      const titularCuenta =
-        item.titularcuenta || item.beneficiario;
-      const swift = swiftCode.find((s => s.codigobanco === item.cuentabanco?.slice(0, 4)))?.codigoswift
+      const titularCuenta =    item.titularcuenta || item.beneficiario;
+      const codebank = item.cuentabanco?.slice(0, 4);
+      const swift = swiftCode.find((s => s.codigobanco === codebank))?.codigoswift
 
 
       return {
@@ -412,7 +412,7 @@ export function useAuthPays(searchText: string) {
         tasaautorizada: rate,
         montoautorizado,
         autorizadopagar: 1,
-        metodopago: metodo ?? "",
+        metodopago: metodo,
         empresapagadora: selectedMethod?.empresapagadora ?? "",
         bancopagador: selectedMethod?.bancopago ?? "",
         codigounico: selectedMethod?.codigounico ?? 0,
@@ -420,7 +420,7 @@ export function useAuthPays(searchText: string) {
         autorizadopor: name,
         titularcuenta: titularCuenta,
         codigoswift: swift,
-
+        codigobanco: codebank,
         planpagonumero: 0,
         autorizadonumero: 0,
         pagado: false,
@@ -446,7 +446,7 @@ export function useAuthPays(searchText: string) {
       autorizadonumero: 0,
       codigounico: 0,
       autorizadopor: "",
-      fechaautorizadopor: null
+      fechaautorizadopor: null,
 
     }));
   }
