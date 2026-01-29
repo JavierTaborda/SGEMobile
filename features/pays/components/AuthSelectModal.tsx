@@ -27,78 +27,18 @@ import {
   BuildAuthorizedItems,
   BuildUnAuthorizedItems,
 } from "../types/BuildAuthorizedItems";
+import { ResultPostAuth } from "../types/ResultPosts";
 
 interface Props {
   visible: boolean;
+  setVisible: () => void;
   onClose: () => void;
   items: PlanPagos[];
   methods: MethodPay[];
-  onAuthorize: (authorizedItems: PlanPagos[]) => Promise<void>;
+  onAuthorize: (authorizedItems: PlanPagos[]) => Promise<ResultPostAuth>;
   buildAuthorizedItems: BuildAuthorizedItems;
   buildUnAuthorizedItems: BuildUnAuthorizedItems;
 }
-
-/* ----------------------- HELPERS ----------------------- */
-
-// function buildAuthorizedItems(
-//   items: PlanPagos[],
-//   currency: string,
-//   rate: number,
-//   customAmount?: number,
-//   selectedMethod?: MethodPay,
-// ): PlanPagos[] {
-//   return items.map((item, index) => {
-//     let montoautorizado =
-//       currency === "USD"
-//         ? Number(item.montoneto) / (item.moneda === "USD" ? 1 : rate)
-//         : Number(item.montoneto) * (item.moneda === "USD" ? rate : 1);
-
-//     // Override only first item if custom amount is provided
-//     if (index === 0 && customAmount !== undefined && customAmount > 0) {
-//       montoautorizado = customAmount;
-//     }
-//     const titularCuenta = item.beneficiario || item.titularcuenta;
-
-//     return {
-//       ...item,
-//       monedaautorizada: currency,
-//       tasaautorizada: rate,
-//       montoautorizado,
-//       autorizadopagar: 1,
-//       metodopago: selectedMethod?.textList ?? "",
-//       empresapagadora: selectedMethod?.empresapagadora ?? "",
-//       bancopagador: selectedMethod?.bancopago ?? "",
-//       codigounico: selectedMethod?.codigounico ?? 0,
-//       fechaautorizadopor: new Date(),
-//       autorizadopor: null,
-//       planpagonumero: 0,
-//       autorizadonumero: 0,
-//       codigobanco: null,
-//       codigoswift: null,
-//       pagado: false,
-//       fechapagado: null,
-//       titularcuenta: titularCuenta,
-
-//       generadotxt: false,
-//       enviadocajachica: false,
-//       conciliadopago: false,
-//       cob_num: 0,
-//       moneda_pago: null,
-//       monto_pago: 0,
-//       cantidadSKU: 0,
-//       unidades: 0,
-//       origen: "",
-//       numeroPOOdoo: "",
-//       linkseleccion: "",
-//       categoria: null,
-//       temporada: "",
-//       estatuscompras: "",
-//       fechacompras: null,
-//       estatuslogistico: "",
-//       fechalogistico: null,
-//     };
-//   });
-// }
 
 function useAuthPayRules(
   items: PlanPagos[],
@@ -137,25 +77,9 @@ function useAuthPayRules(
   }, [items, methods, formaPago]);
 }
 
-// function buildUnAuthorizedItems(items: PlanPagos[]): PlanPagos[] {
-//   return items.map((item) => ({
-//     ...item,
-//     autorizadopagar: 0,
-//     monedaautorizada: null,
-//     tasaautorizada: 0,
-//     montoautorizado: 0,
-//     metodopago: "",
-//     empresapagadora: "",
-//     bancopagador: "",
-//     planpagonumero: 0,
-//     autorizadonumero: 0,
-//     codigounico: 0,
-//   }));
-// }
-/* ----------------------- MAIN COMPONENT ----------------------- */
-
 export default function AuthPayModal({
   visible,
+  setVisible,
   onClose,
   items,
   methods,
@@ -336,17 +260,16 @@ export default function AuthPayModal({
         0,
       );
 
-      await onAuthorize(authorizedItems);
+      const result: ResultPostAuth = await onAuthorize(authorizedItems);
 
       overlay.show("success", {
         title: "Pagos autorizados",
         subtitle: `${items.length} documento${items.length !== 1 ? "s" : ""} por ${totalVenezuela(totalAuthorized)} ${targetCurrency}`,
       });
-
-      onClose();
     } catch (error) {
+      onClose();
       overlay.show("error", {
-        title: "Error al autorizar",
+        title: "Error al autorizar, este cambio no se guardara en la numbe",
         subtitle: error instanceof Error ? error.message : "Error desconocido",
       });
     } finally {

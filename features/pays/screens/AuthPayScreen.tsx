@@ -375,6 +375,7 @@ export default function AuthorizationScreen() {
           items={selectedItems}
           methods={methods}
           onClose={() => setAuthSelectModalVisible(false)}
+          setVisible={() => setAuthSelectModalVisible(true)}
           onAuthorize={udapteDocuments}
           buildAuthorizedItems={buildAuthorizedItems}
           buildUnAuthorizedItems={buildUnAuthorizedItems}

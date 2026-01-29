@@ -2,7 +2,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { safeHaptic } from "@/utils/safeHaptics";
 import { useRefreshControl } from "@/utils/userRefreshControl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert } from "react-native";
 import { groupAuthorizedPays } from "../helpers/groupAuthorizedPays";
 import { CreatePlanResponse } from "../interfaces/CreatePlanResponse";
 import { MethodPay } from "../interfaces/MethodPay";
@@ -10,13 +9,15 @@ import { PlanificacionPago } from "../interfaces/PlanificacionPagos";
 import { PlanPagos } from "../interfaces/PlanPagos";
 import { CodeSwift } from "../interfaces/SwiftCode";
 import {
+  authDocuments,
   createPlan,
   getMethodPays,
   getPaysToAuthorize,
-  getSwiftCodes,
+  getSwiftCodes
 } from "../services/AuthPaysServices";
 import { useAuthPaysStore } from "../stores/useAuthPaysStore";
 import { FilterData, SelectedFilters } from "../types/Filters";
+import { ResultPostAuth, ResultPostPlan } from "../types/ResultPosts";
 
 export function useAuthPays(searchText: string) {
   const pays = useAuthPaysStore((s) => s.pays);
@@ -158,33 +159,27 @@ export function useAuthPays(searchText: string) {
   const handleRefresh = useCallback(() => {
     wrapRefresh(
       async () => {
-        Alert.alert(
-          "Actualizar documentos ",
+        // Alert.alert(
+        //   "Actualizar documentos ",
 
-          "Al refrescar los datos se eliminaran los caambios aplicados. ¿Desea continuar?",
-          [
-            {
-              text: "No, quiero mantener cambios.",
-              style: "cancel",
-            },
-            {
-              text: "Si, actualizar documentos.",
-              style: "destructive",
-              onPress: async () => {
-                await refreshData();
-              },
-            },
-          ],
-          { cancelable: true },
-        );
+        //   "Al refrescar los datos se eliminaran los caambios aplicados. ¿Desea continuar?",
+        //   [
+        //     {
+        //       text: "No, quiero mantener cambios.",
+        //       style: "cancel",
+        //     },
+        //     {
+        //       text: "Si, actualizar documentos.",
+        //       style: "destructive",
+        //       onPress: async () => {
+        //         await refreshData();
+        //       },
+        //     },
+        //   ],
+        //   { cancelable: true },
+        // );
 
-        const [methodsData, swiftCode] = await Promise.all([
-
-          getMethodPays(),
-          getSwiftCodes(),
-        ]);
-        setMethods(methodsData);
-        setSwiftCode(swiftCode);
+        refreshData()
       },
       () => setError("Ocurrió un error al cargar los datos..."),
     );
@@ -214,36 +209,41 @@ export function useAuthPays(searchText: string) {
   const loadData = useCallback(async () => {
     if (hasLoadedRef.current) return;
     hasLoadedRef.current = true;
-    setError(null);
-    if (pays.length === 0) {
-      await refreshData();
-      return;
-    }
-    if (!isCacheExpired) {
-      Alert.alert(
-        "Documentos en caché disponibles",
-        "Hay documentos sincronizados recientemente. ¿Desea mantenerlos o actualizar a los más recientes? Se perderán los cambios no guardados.",
-        [
-          {
-            text: "Mantener",
-            style: "cancel",
-            onPress: () => {
-              buildFilters(pays);
-              setLoading(false);
-            },
-          },
-          {
-            text: "Actualizar",
-            style: "destructive",
-            onPress: async () => {
-              await refreshData();
-            },
-          },
-        ],
-        { cancelable: true },
-      );
-      return;
-    }
+    setError(null);   
+    
+    //to save documents in cache uncomment this
+    // if (pays.length === 0) {
+    //   await refreshData();
+    //   return;
+    // }
+
+
+
+    // if (!isCacheExpired) {
+    //   Alert.alert(
+    //     "Documentos en caché disponibles",
+    //     "Hay documentos sincronizados recientemente. ¿Desea mantenerlos o actualizar a los más recientes? Se perderán los cambios no guardados.",
+    //     [
+    //       {
+    //         text: "Mantener",
+    //         style: "cancel",
+    //         onPress: () => {
+    //           buildFilters(pays);
+    //           setLoading(false);
+    //         },
+    //       },
+    //       {
+    //         text: "Actualizar",
+    //         style: "destructive",
+    //         onPress: async () => {
+    //           await refreshData();
+    //         },
+    //       },
+    //     ],
+    //     { cancelable: true },
+    //   );
+    //   return;
+    // }
 
     await refreshData();
     buildFilters(pays);
@@ -331,12 +331,17 @@ export function useAuthPays(searchText: string) {
     setAuthSelectModalVisible(true);
   }, []);
   const udapteDocuments = async (documents: PlanPagos[]) => {
-    updatePays(documents);
-    setAuthSelectModalVisible(false);
 
-    requestAnimationFrame(() => {
+
+    const result: ResultPostAuth = await authDocuments(documents)
+
+    if (result.success) {
+      updatePays(documents);
+
+      setAuthSelectModalVisible(false);
       exitSelectionMode();
-    });
+    }
+    return result
   };
   const createPlanPago = async (
     planToCreate: PlanificacionPago,
@@ -353,7 +358,7 @@ export function useAuthPays(searchText: string) {
       }
 
 
-      const result = await createPlan(planFinal);
+      const result: ResultPostPlan = await createPlan(planFinal);
 
       if (result.success) {
         applyPlanToDocuments(result.planpagonumero, planFinal.items);
@@ -401,7 +406,7 @@ export function useAuthPays(searchText: string) {
       }
       const metodo = currency === "USD" ? "DOLARES" : "BOLIVARES";
 
-      const titularCuenta =    item.titularcuenta || item.beneficiario;
+      const titularCuenta = item.titularcuenta || item.beneficiario;
       const codebank = item.cuentabanco?.slice(0, 4);
       const swift = swiftCode.find((s => s.codigobanco === codebank))?.codigoswift
 

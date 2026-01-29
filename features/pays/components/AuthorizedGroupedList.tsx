@@ -139,16 +139,24 @@ function EmpresaGroup({
             {empresa}
           </Text>
         </View>
-        <View className="flex-row gap-6">
+        <View className="flex-1 gap-6">
           {/* VED */}
           <View className="flex-col items-center">
-            <Text className="font-light text-primary dark:text-dark-primary">
+            <Text
+              className="font-light text-primary dark:text-dark-primary"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {totalVenezuela(totalsByCurrency["VED"] || 0)} {currencyVED}
             </Text>
           </View>
           {/* USD */}
           <View className="flex-col items-center">
-            <Text className="font-light text-primary dark:text-dark-primary">
+            <Text
+              className="font-light text-primary dark:text-dark-primary"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {totalVenezuela(totalsByCurrency["USD"] || 0)} {currencyDollar}
             </Text>
           </View>
