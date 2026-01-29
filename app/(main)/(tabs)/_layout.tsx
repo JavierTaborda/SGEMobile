@@ -1,5 +1,6 @@
 import { useThemeStore } from "@/stores/useThemeStore";
 import { appTheme } from "@/utils/appTheme";
+import { tabSize } from "@/utils/tabSize";
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { DrawerToggleButton } from "@react-navigation/drawer";
@@ -9,7 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function getTabIcon(
   routeName: string,
-  focused: boolean
+  focused: boolean,
 ): keyof typeof Ionicons.glyphMap {
   switch (routeName) {
     case "(home)/index":
@@ -89,22 +90,22 @@ export default function TabLayout() {
         tabBarStyle: {
           position: "absolute",
           bottom: 0,
-          height: 60 + insets.bottom,
+          height: tabSize + insets.bottom,
           paddingBottom: insets.bottom,
           backgroundColor: isDark
             ? appTheme.dark.background
             : appTheme.background,
           borderTopWidth: 1,
-          borderTopColor: isDark
-            ? appTheme.dark.separator
-            : appTheme.separator,
+          borderTopColor: isDark ? appTheme.dark.separator : appTheme.separator,
 
           shadowOpacity: 0,
           shadowRadius: 0,
           elevation: 0,
         },
 
-        tabBarActiveTintColor: isDark ? appTheme.dark.primary.DEFAULT: appTheme.primary.DEFAULT,
+        tabBarActiveTintColor: isDark
+          ? appTheme.dark.primary.DEFAULT
+          : appTheme.primary.DEFAULT,
         tabBarInactiveTintColor: appTheme.mutedForeground,
         //  Tab item style
         tabBarLabelStyle: {
@@ -115,9 +116,7 @@ export default function TabLayout() {
         headerShown: true,
         headerLeft: () => (
           <DrawerToggleButton
-            tintColor={
-              isDark ? appTheme.dark.foreground : appTheme.background
-            }
+            tintColor={isDark ? appTheme.dark.foreground : appTheme.background}
           />
         ),
         headerStyle: {
@@ -181,7 +180,7 @@ export default function TabLayout() {
         options={{
           href: null,
           headerShown: true,
-           title: "",
+          title: "",
         }}
       />
       <Tabs.Screen

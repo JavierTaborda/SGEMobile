@@ -3,7 +3,6 @@ import { appTheme } from "@/utils/appTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList, FlashListProps, FlashListRef } from "@shopify/flash-list";
 
-
 import React, {
   useCallback,
   useEffect,
@@ -19,11 +18,10 @@ import {
   Text,
   ToastAndroid,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import TitleText from "./TitleText";
 type Props<T> = {
-
   data: T[];
   renderItem: FlashListProps<T>["renderItem"];
   keyExtractor: FlashListProps<T>["keyExtractor"];
@@ -40,7 +38,6 @@ type Props<T> = {
   showScrollTopButton?: boolean;
   pageSize?: number;
 };
-
 
 function CustomFlatList<T>({
   data,
@@ -59,15 +56,14 @@ function CustomFlatList<T>({
   showScrollTopButton = true,
   pageSize = 20,
 }: Props<T>) {
-const flashListRef = useRef<FlashListRef<T>>(null);
+  const flashListRef = useRef<FlashListRef<T>>(null);
   const { handleScroll, showScrollTop, headerVisible } = useScrollHeader();
 
   const [page, setPage] = useState(1);
 
-  
   const paginatedData = useMemo(
     () => data.slice(0, page * pageSize),
-    [data, page, pageSize]
+    [data, page, pageSize],
   );
 
   useEffect(() => {
@@ -126,12 +122,10 @@ const flashListRef = useRef<FlashListRef<T>>(null);
         data={paginatedData}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-      
         contentContainerStyle={styles.listContent}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         numColumns={numColumns}
- 
         refreshControl={
           <RefreshControl
             refreshing={canRefresh ? refreshing : false}
@@ -203,7 +197,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 100,
     right: 20,
-    zIndex: 1000,
+    zIndex: 50,
     elevation: 10,
   },
   listContent: {
