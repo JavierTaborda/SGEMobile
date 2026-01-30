@@ -28,6 +28,7 @@ export function useAuthPays(searchText: string) {
   const [methods, setMethods] = useState<MethodPay[]>([]);
   const [swiftCode, setSwiftCode] = useState<CodeSwift[]>([]);
   const [loading, setLoading] = useState(true);
+  const [handleLoading, setHandleLoading] = useState(false);
   const hasLoadedRef = useRef(false);
   const { name } = useAuthStore();
 
@@ -155,37 +156,10 @@ export function useAuthPays(searchText: string) {
     ).length;
   }, [selectedFilters]);
 
-  // Refresh
-  const handleRefresh = useCallback(() => {
-    wrapRefresh(
-      async () => {
-        // Alert.alert(
-        //   "Actualizar documentos ",
 
-        //   "Al refrescar los datos se eliminaran los caambios aplicados. ¿Desea continuar?",
-        //   [
-        //     {
-        //       text: "No, quiero mantener cambios.",
-        //       style: "cancel",
-        //     },
-        //     {
-        //       text: "Si, actualizar documentos.",
-        //       style: "destructive",
-        //       onPress: async () => {
-        //         await refreshData();
-        //       },
-        //     },
-        //   ],
-        //   { cancelable: true },
-        // );
-
-        refreshData()
-      },
-      () => setError("Ocurrió un error al cargar los datos..."),
-    );
-  }, [wrapRefresh]);
 
   const refreshData = async () => {
+
     try {
       const [paysData, methodsData, swiftCode] = await Promise.all([
         getPaysToAuthorize(),
@@ -206,11 +180,36 @@ export function useAuthPays(searchText: string) {
     }
   };
 
+
+  // Refresh
+  const handleRefresh = useCallback(() => {
+    wrapRefresh(
+      async () => {
+        try {
+          setHandleLoading(true);
+          await refreshData();
+        } catch (err) {
+          setError("Ocurrió un error al refrescar los datos...");
+        }
+        finally {
+          setHandleLoading(false);
+        }
+      },
+      (err) => {
+        setError("Ocurrió un error al refrescar los datos...");
+        setHandleLoading(false);
+
+      }
+    );
+  }, [wrapRefresh, refreshData]);
+
+
   const loadData = useCallback(async () => {
     if (hasLoadedRef.current) return;
     hasLoadedRef.current = true;
-    setError(null);   
-    
+    setError(null);
+    setLoading(true)
+
     //to save documents in cache uncomment this
     // if (pays.length === 0) {
     //   await refreshData();
@@ -244,11 +243,13 @@ export function useAuthPays(searchText: string) {
     //   );
     //   return;
     // }
-
-    await refreshData();
-    buildFilters(pays);
-    setLoading(false);
-  }, [isCacheExpired]);
+    try {
+      await refreshData();
+    } finally {
+      setLoading(false);
+    }
+  }, [//isCacheExpired
+  ]);
 
   useEffect(() => {
     loadData();
@@ -505,6 +506,7 @@ export function useAuthPays(searchText: string) {
     totalDocumentsPlan,
     loadData,
     buildAuthorizedItems,
-    buildUnAuthorizedItems
+    buildUnAuthorizedItems,
+    handleLoading
   };
 }

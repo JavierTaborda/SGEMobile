@@ -22,6 +22,7 @@ import AuthorizedGroupedList from "../components/AuthorizedGroupedList";
 import AuthPayCard from "../components/AuthPayCard";
 import AuthPaySkeleton from "../components/AuthPaySkeleton";
 import AuthSelectModal from "../components/AuthSelectModal";
+import ListPaySkeleton from "../components/ListPaySkeleton";
 import FiltersModal from "../components/PayFilterModal";
 import { PlanPagos } from "../interfaces/PlanPagos";
 
@@ -75,6 +76,7 @@ export default function AuthorizationScreen() {
     loadData,
     buildAuthorizedItems,
     buildUnAuthorizedItems,
+    handleLoading,
   } = useAuthPays(searchText);
 
   /* HEADER ANIMATION */
@@ -250,20 +252,24 @@ export default function AuthorizationScreen() {
 
             {/* LIST */}
 
-            <CustomFlatList
-              data={filteredPays}
-              keyExtractor={(item) => `pay-${item.numerodocumento}`}
-              refreshing={refreshing}
-              canRefresh={canRefresh}
-              handleRefresh={handleRefresh}
-              cooldown={cooldown}
-              showtitle
-              title="Total autorizado"
-              subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
-                totalAutorizadoUSD,
-              )} $`}
-              renderItem={renderItem}
-            />
+            {handleLoading ? (
+              <ListPaySkeleton />
+            ) : (
+              <CustomFlatList
+                data={filteredPays}
+                keyExtractor={(item) => `pay-${item.numerodocumento}`}
+                refreshing={refreshing}
+                canRefresh={canRefresh}
+                handleRefresh={handleRefresh}
+                cooldown={cooldown}
+                showtitle
+                title="Total autorizado"
+                subtitle={`${totalVenezuela(totalAutorizadoVED)} VED / ${totalVenezuela(
+                  totalAutorizadoUSD,
+                )} $`}
+                renderItem={renderItem}
+              />
+            )}
           </View>
 
           <View key="2">

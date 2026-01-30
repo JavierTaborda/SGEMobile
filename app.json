@@ -8,11 +8,7 @@
     "icon": "./assets/images/iconSGE.png",
     "scheme": "sge-mobile",
     "userInterfaceStyle": "automatic",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sge.mobile",
@@ -22,6 +18,7 @@
       }
     },
     "android": {
+      "icon": "./assets/images/icon-android.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/iconSGE.png",
         "backgroundColor": "#ffffff"

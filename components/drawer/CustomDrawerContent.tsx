@@ -36,7 +36,7 @@ export default function CustomDrawerContent(props: any) {
         <Text className="text-sm font-semibold  justify-center text-center text-foreground dark:text-dark-foreground mt-1 mb-1">
           plataforma SGE
         </Text>
-
+        {/*
         <DrawerItem
           //emoji={emojis.package}
           //emoji={emojis.approved}
@@ -46,7 +46,7 @@ export default function CustomDrawerContent(props: any) {
           currentPath={currentPath}
         />
 
-        {/*
+        
         <DrawerItem
           //emoji={emojis.list}
           //emoji={emojis.approved}
