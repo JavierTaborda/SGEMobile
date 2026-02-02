@@ -13,7 +13,7 @@ export const appTheme = {
     DEFAULT: "rgb(59, 130, 246)",
     light: "rgb(147, 197, 253)",
   },
-  accent: {
+  accent: {   
     DEFAULT: "rgb(250, 204, 21)",
     light: "rgb(254, 240, 138)",
   },

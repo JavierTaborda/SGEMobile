@@ -1,12 +1,13 @@
 import { useThemeStore } from "@/stores/useThemeStore";
-import { appTheme } from "@/utils/appTheme";
 import { FontAwesome } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import { BlurView } from "expo-blur";
+import { useCallback, useMemo, useState } from "react";
 import {
   Modal,
   Platform,
   Pressable,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -37,82 +38,58 @@ export default function CustomPicker({
   const [touched, setTouched] = useState(false);
   const [focused, setFocused] = useState(false);
   const [iosModalVisible, setIosModalVisible] = useState(false);
-
-  const isValid = !!selectedValue;
-  const selectedLabel =
-    items.find((i) => i.value === selectedValue)?.label || placeholder;
-
-  const handleValueChange = (value: string) => {
-    setTouched(true);
-    onValueChange(value);
-
-    // if (Platform.OS === "ios" && value) {
-    //   setTimeout(() => {
-    //     setFocused(false);
-    //     setIosModalVisible(false);
-    //   }, 250);
-    // }
-  };
-
-
-  // Nuevo estado para búsqueda
   const [search, setSearch] = useState("");
 
-  const filteredItems = items.filter((item) =>
-    item.label.toLowerCase().includes(search.toLowerCase())
+  const isValid = !!selectedValue;
+
+  const memoizedItems = useMemo(() => {
+    if (!search) return items;
+    return items.filter((item) =>
+      item.label.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [items, search]);
+
+  const selectedLabel = useMemo(() => {
+    return items.find((i) => i.value === selectedValue)?.label || placeholder;
+  }, [items, selectedValue, placeholder]);
+
+  const handleValueChange = useCallback(
+    (value: string) => {
+      if (value === selectedValue) return;
+
+      setTouched(true);
+      onValueChange(value);
+    },
+    [onValueChange, selectedValue],
   );
 
-  const iconName = FontAwesome.glyphMap[icon] ? icon : "list";
+  const closeIosModal = () => {
+    setFocused(false);
+    setIosModalVisible(false);
+    setSearch("");
+  };
 
   return (
     <View className="w-full">
-      {/* INPUT */}
+      {/* INPUT TRIGGER */}
       <View
         className={`flex-row items-center gap-3 min-h-[48px] px-4 rounded-xl border
         bg-white dark:bg-dark-componentbg
-        ${
-          focused
-            ? "border-primary dark:border-dark-primary"
-            : touched && !isValid
-              ? "border-red-500 dark:border-red-400"
-              : "border-gray-300 dark:border-gray-700"
-        }`}
+        ${focused ? "border-primary dark:border-dark-primary" : touched && !isValid ? "border-red-500" : "border-gray-300 dark:border-gray-700"}`}
       >
-        {/* LEFT ICON
-        <FontAwesome
-          name={iconName}
-          size={20}
-          color={
-            touched && !isValid
-              ? appTheme.error
-              : theme === "dark"
-                ? (appTheme.dark.secondary.DEFAULT ?? "#ccc")
-                : (appTheme.secondary.DEFAULT ?? "#333")
-          }
-        /> */}
-
-        {/* ANDROID */}
         {Platform.OS === "android" ? (
           <View className="flex-1">
             <Picker
+              mode="dialog"
               selectedValue={selectedValue}
               onValueChange={handleValueChange}
+              dropdownIconColor={theme === "dark" ? "#ccc" : "#333"}
               style={{
-                color: isValid
-                  ? theme === "dark"
-                    ? (appTheme.dark.foreground ?? "#fff")
-                    : (appTheme.foreground ?? "#000")
-                  : (appTheme.placeholdercolor ?? "#999"),
-                backgroundColor: "transparent",
+                color: isValid ? (theme === "dark" ? "#fff" : "#000") : "#999",
               }}
             >
-              <Picker.Item
-                label={placeholder}
-                value=""
-                enabled={false}
-                color={appTheme.placeholdercolor ?? "#999"}
-              />
-              {items.map((item) => (
+              <Picker.Item label={placeholder} value="" enabled={false} />
+              {memoizedItems.map((item) => (
                 <Picker.Item
                   key={item.value}
                   label={item.label}
@@ -122,146 +99,101 @@ export default function CustomPicker({
             </Picker>
           </View>
         ) : (
-          /* IOS */
-          <>
-            <Pressable
-              className="flex-1 py-3"
-              onPress={() => {
-                setFocused(true);
-                setIosModalVisible(true);
-              }}
+          <Pressable
+            className="flex-1 py-3 flex-row justify-between items-center"
+            onPress={() => {
+              setFocused(true);
+              setIosModalVisible(true);
+            }}
+          >
+            <Text
+              className={`text-base ${isValid ? "text-foreground dark:text-dark-foreground" : "text-gray-400"}`}
             >
-              <Text
-                className={`text-base ${
-                  isValid
-                    ? "text-foreground dark:text-dark-foreground"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
-              >
-                {selectedLabel}
-              </Text>
-            </Pressable>
-
-            <FontAwesome
-              name="chevron-down"
-              size={16}
-              color={
-                theme === "dark"
-                  ? (appTheme.dark.muted ?? "#888")
-                  : (appTheme.muted ?? "#888")
-              }
-            />
-          </>
+              {selectedLabel}
+            </Text>
+            <FontAwesome name="chevron-down" size={14} color="#888" />
+          </Pressable>
         )}
       </View>
 
       {/* ERROR */}
       {touched && !isValid && (
-        <View className="flex-row items-center gap-1 mt-1">
-          <FontAwesome
-            name="exclamation-circle"
-            size={12}
-            color={appTheme.error}
-          />
-          <Text className="text-red-500 text-xs">
-            {error || "Seleccione una opción"}
-          </Text>
-        </View>
+        <Text className="text-red-500 text-xs mt-1 ml-1">
+          {error || "Seleccione una opción"}
+        </Text>
       )}
 
-      {/* IOS MODAL */}
       {Platform.OS === "ios" && (
         <Modal
           transparent
           visible={iosModalVisible}
           animationType="fade"
-          onRequestClose={() => {
-            setFocused(false);
-            setIosModalVisible(false);
-          }}
+          onRequestClose={closeIosModal}
         >
-          <View className="flex-1 bg-black/40">
-            {/* OVERLAY */}
-            <Pressable
-              className="flex-1"
-              onPress={() => {
-                setFocused(false);
-                setIosModalVisible(false);
-              }}
-            />
-
-            {/* BOTTOM SHEET */}
-            <View
-              style={{ paddingBottom: insets.bottom }}
-              className="bg-white dark:bg-dark-componentbg rounded-t-3xl shadow-2xl overflow-hidden"
+          <View className="flex-1 justify-end">
+            {/* Fondo con Blur que también cierra al tocar fuera */}
+            <BlurView
+              intensity={25}
+              tint={theme === "dark" ? "dark" : "light"}
+              style={StyleSheet.absoluteFill}
             >
-              <View className="flex-row justify-between items-center px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                <Text className="text-lg font-semibold text-foreground dark:text-dark-foreground">
-                  Selecciona una opción
+              <Pressable className="flex-1" onPress={closeIosModal} />
+            </BlurView>
+
+            <View
+              style={{ paddingBottom: insets.bottom + 10 }}
+              className="bg-white dark:bg-dark-componentbg rounded-t-3xl shadow-2xl"
+            >
+              <View className="flex-row justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                <Text className="text-lg font-bold dark:text-white">
+                  {placeholder}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => {
-                    setFocused(false);
-                    setIosModalVisible(false);
-                  }}
-                  className="px-3 py-1"
+                  onPress={closeIosModal}
+                  className="bg-primary/10 dark:bg-dark-primary/20 px-4 py-2 rounded-full"
                 >
-                  <Text className="text-primary dark:text-dark-primary font-semibold">
-                    Aceptar
+                  <Text className="text-primary dark:text-dark-primary font-bold text-base">
+                    Listo
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              <View className="h-[320px] mx-2">
-                {/* search */}
-                <View
-                  className="flex-row items-center px-3 py-3 mt-1 mb-2 
-                 bg-componentbg dark:bg-dark-componentbg 
-                 rounded-2xl border border-gray-300 dark:border-gray-700"
-                >
-                  
-                  <FontAwesome
-                    name="search"
-                    size={18}
-                    color={theme === "dark" ? "#aaa" : "#555"}
-                    style={{ marginRight: 8 }}
-                  />
-
-                  {/* Input */}
+              <View className="px-4 py-3">
+                <View className="flex-row items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                  <FontAwesome name="search" size={14} color="#888" />
                   <TextInput
                     value={search}
                     onChangeText={setSearch}
-                    placeholder="Buscar..."
-                    className="flex-1 text-base text-foreground dark:text-dark-foreground"
-                    placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-                    clearButtonMode="never" 
+                    placeholder="Filtrar opciones..."
+                    placeholderTextColor="#888"
+                    className="flex-1 ml-2 dark:text-white h-9"
+                    autoCorrect={false}
                   />
-
-                  {/* Botón limpiar */}
-                  {search.length > 0 && (
+                  {search !== "" && (
                     <TouchableOpacity onPress={() => setSearch("")}>
-                      <FontAwesome
-                        name="times-circle"
-                        size={18}
-                        color={theme === "dark" ? "#aaa" : "#555"}
-                      />
+                      <FontAwesome name="times-circle" size={18} color="#888" />
                     </TouchableOpacity>
                   )}
                 </View>
+              </View>
 
-                {/* Picker  items filtereds */}
+              {/* LISTA DE PICKER */}
+              <View className="h-[250px] mb-4">
                 <Picker
                   selectedValue={selectedValue}
                   onValueChange={handleValueChange}
-                  style={{
-                    color:
-                      theme === "dark"
-                        ? (appTheme.dark.foreground ?? "#fff")
-                        : (appTheme.foreground ?? "#000"),
+                  itemStyle={{
+                    fontSize: 20,
+                    color: theme === "dark" ? "#fff" : "#000",
+                    height: 250,
                   }}
                 >
-                  <Picker.Item label={placeholder} value="" />
-                  {filteredItems.map((item) => (
+                  <Picker.Item
+                    label="-- Sin selección --"
+                    value=""
+                    color="#888"
+                  />
+                  {memoizedItems.map((item) => (
                     <Picker.Item
                       key={item.value}
                       label={item.label}

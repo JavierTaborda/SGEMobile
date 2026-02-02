@@ -378,7 +378,7 @@ export default function AuthPayModal({
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-3 gap-y-2">
           <View>
             <Text className="text-lg font-bold mb-1 text-foreground dark:text-dark-foreground">
-              Forma de pago {formaPago}
+              Forma de pago
             </Text>
             <CustomPicker
               selectedValue={formaPago}
@@ -428,8 +428,8 @@ export default function AuthPayModal({
         {/* Items detail */}
         <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4">
           <Pressable onPress={() => setExpanded((v) => !v)}>
-            <Text className="text-primary dark:text-dark-primary font-bold text-base">
-              {expanded ? "Ocultar detalle" : `Ver detalle (${items.length})`}
+            <Text className="text-primary dark:text-dark-primary font-bold text-base items-center text-center">
+              {expanded ? "Ocultar detalle" : `Ver detalle`}
             </Text>
           </Pressable>
 
@@ -497,7 +497,7 @@ export default function AuthPayModal({
           onPress={handleAuthorize}
         >
           <Text className="text-white font-bold text-base">
-            {isLoading ? "Procesando..." : `Autorizar (${items.length})`}
+            {isLoading ? "Procesando..." : `Autorizar`}
           </Text>
         </Pressable>
 
