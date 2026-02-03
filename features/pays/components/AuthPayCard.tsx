@@ -166,7 +166,7 @@ export default function AuthPayCard({
 
             {/* Amounts */}
             <View
-              className={`rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 gap-y-1 my-2 `}
+              className={`rounded-xl bg-gray-50 dark:bg-gray-700 px-3 py-1 my-2 `}
             >
               <View className={`flex-row justify-between `}>
                 <View>
@@ -223,12 +223,6 @@ export default function AuthPayCard({
               )}
             </View>
             <View className="space-y-1">
-              {/* <Text className="text-sm  text-gray-500 dark:text-gray-400">
-                Fecha{" "}
-                <Text className="font-medium text-foreground dark:text-dark-foreground">
-                  {dateMonthText(item.fechaemision.toString())}
-                </Text>
-              </Text> */}
               {isAuth && (
                 <Text
                   numberOfLines={1}

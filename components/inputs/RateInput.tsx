@@ -1,7 +1,6 @@
 import { useThemeStore } from "@/stores/useThemeStore";
 import { appTheme } from "@/utils/appTheme";
-import { FontAwesome } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
 export default function RateInput({
@@ -14,37 +13,58 @@ export default function RateInput({
   placeholder?: string;
 }) {
   const [touched, setTouched] = useState(false);
-  const {isDark} = useThemeStore(); 
 
-  const isValid = !isNaN(value) && value >= 0;
+  const [textValue, setTextValue] = useState(value?.toString() || "");
+  const { isDark } = useThemeStore();
+
+  useEffect(() => {
+    const stringValue = value?.toString() || "";
+    if (parseFloat(textValue) !== value) {
+      setTextValue(value === 0 ? "" : stringValue);
+    }
+  }, [value]);
+
+  const isValid = !isNaN(value) && value > 0;
+
+  const handleChangeText = (text: string) => {
+    const cleaned = text.replace(/,/g, ".");
+
+    if ((cleaned.match(/\./g) || []).length > 1) return;
+
+    setTextValue(cleaned);
+
+    if (cleaned.endsWith(".")) return;
+
+    const parsed = parseFloat(cleaned);
+    if (!isNaN(parsed)) {
+      onChangeValue(parsed);
+    } else if (cleaned === "") {
+      onChangeValue(0);
+    }
+  };
 
   return (
     <View>
       <View
-        className={`flex-row items-center border rounded-xl px-4 dark:text-white bg-transparent dark:bg-dark-componentbg
-          ${touched && !isValid ? 'border-red-500 dark:border-red-300' : 'border-gray-300 dark:border-gray-600'}
+        className={`flex-row items-center border rounded-xl px-2 bg-transparent dark:bg-dark-componentbg
+          ${touched && !isValid ? "border-red-500 dark:border-red-300" : "border-gray-300 dark:border-gray-600"}
         `}
       >
-        <FontAwesome
-          name="money"
-          size={20}
-          color={touched && !isValid ? appTheme.error : (isDark ? appTheme.dark.primary.DEFAULT: appTheme.primary.DEFAULT)}
-        />
         <TextInput
           className="flex-1 px-2 py-4 text-black dark:text-white"
           placeholder={placeholder}
-          value={value?.toString()}
-          placeholderTextColor={isDark ?appTheme.dark.placeholdercolor:  appTheme.placeholdercolor }
-          keyboardType="decimal-pad"
-          onBlur={() => setTouched(true)}
-          onChangeText={(text) => {
-            const parsed = parseFloat(text);
-            if (!isNaN(parsed)) {
-              onChangeValue(parsed);
-            } else {
-              onChangeValue(0.00); // predr
-            }
+          value={textValue}
+          placeholderTextColor={
+            isDark ? appTheme.dark.placeholdercolor : appTheme.placeholdercolor
+          }
+          keyboardType="numeric"
+          onBlur={() => {
+            setTouched(true);
+
+            const finalParsed = parseFloat(textValue) || 0;
+            setTextValue(finalParsed.toString());
           }}
+          onChangeText={handleChangeText}
         />
       </View>
       {!isValid && touched && (

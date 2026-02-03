@@ -52,7 +52,21 @@ export default function AuthPayModal({
     year: "numeric",
   });
 
-  const defaultDesc = `PLANIFICACIÓN DE PAGO AL ${formattedDate}`;
+  const multipleEmpresa = (): string | null => {
+    if (items.length <= 1) return null;
+
+    const isMultiple = Array.from(
+      new Set(items.map((i: PlanPagos) => i.empresa)),
+    );
+
+    return isMultiple.length > 1 ? isMultiple.join(",") : null;
+  };
+
+  const empresas = multipleEmpresa();
+
+  const defaultDesc = `PLANIFICACIÓN DE PAGO ${
+    empresas ?? ""
+  } AL ${formattedDate}`;
 
   const [planificacion, setPlanificacionPago] = useState<PlanificacionPago>({
     descripcionplan: defaultDesc,
@@ -190,7 +204,6 @@ export default function AuthPayModal({
         ]}
       >
         <ScrollView contentContainerClassName="gap-4 pt-2 pb-6">
-          {/* Descripción */}
           <View className="gap-2">
             <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
               Descripción
@@ -198,11 +211,11 @@ export default function AuthPayModal({
 
             <CustomTextInput
               placeholder="Descripción del plan"
-              value={planificacion.descripcionplan}
+              value={planificacion.descripcionplan.toLocaleUpperCase()}
               onChangeText={(text) =>
                 setPlanificacionPago({
                   ...planificacion,
-                  descripcionplan: text,
+                  descripcionplan: text.toLocaleUpperCase(),
                 })
               }
               numberOfLines={3}
@@ -210,7 +223,6 @@ export default function AuthPayModal({
             />
           </View>
 
-          {/* Fecha */}
           <View className="gap-2">
             <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
               Fecha
@@ -235,7 +247,6 @@ export default function AuthPayModal({
             </Pressable>
           </View>
 
-          {/* Resumen */}
           <View className="gap-3">
             <Text className="text-lg font-bold text-foreground dark:text-dark-foreground">
               Resumen
@@ -278,7 +289,6 @@ export default function AuthPayModal({
           </View>
         </ScrollView>
 
-        {/* Date picker iOS */}
         {Platform.OS === "ios" && (
           <Modal visible={dateModalVisible} transparent animationType="fade">
             <BlurView
@@ -323,7 +333,6 @@ export default function AuthPayModal({
           </Modal>
         )}
 
-        {/* Android picker */}
         {Platform.OS === "android" && dateModalVisible && (
           <DateTimePicker
             value={planificacion.fechapagoautorizada}
@@ -342,7 +351,6 @@ export default function AuthPayModal({
           />
         )}
 
-        {/* Botones */}
         <View className="pt-4 gap-y-3">
           <Pressable
             className="py-4 rounded-xl items-center bg-primary dark:bg-dark-primary"
