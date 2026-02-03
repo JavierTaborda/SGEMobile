@@ -10,6 +10,7 @@ type Props = {
   multiline?: boolean;
   numberOfLines?: number;
   editable?: boolean;
+  onError?: boolean;
 };
 
 export default function CustomTextInput({
@@ -21,10 +22,13 @@ export default function CustomTextInput({
   multiline = false,
   numberOfLines = 1,
   editable = true,
+  onError = false,
 }: Props) {
   return (
     <View>
-      <View className="border rounded-xl px-4 bg-transparent dark:bg-dark-componentbg border-gray-300 dark:border-gray-600">
+      <View
+        className={`border rounded-xl px-4 bg-transparent dark:bg-dark-componentbg ${onError ? "border-error dark:border-dark-error" : "border-gray-300 dark:border-gray-600"}`}
+      >
         <TextInput
           className="py-4 text-foreground dark:text-dark-foreground"
           placeholder={placeholder}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -88,10 +88,14 @@ export default function AuthPayModal({
   const [expanded, setExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [errorAmount, setErrorAmout] = useState(false);
 
-  const firstMethodDefault = methods.find((d) =>
-    d.monedapago.startsWith(items[0].moneda),
-  )?.codigounico;
+  const firstMethodDefault = useMemo(
+    () =>
+      methods.find((d) => d.monedapago.startsWith(items[0]?.moneda))
+        ?.codigounico,
+    [methods, items],
+  );
 
   const [formaPago, setFormaPago] = useState(
     firstMethodDefault?.toString() ?? "",
@@ -165,7 +169,10 @@ export default function AuthPayModal({
     return Math.round(val * 100) / 100;
   }, [items, effectiveRate, targetCurrency, requiresRate]);
 
-  const isValid = !!formaPago && (!requiresRate || effectiveRate > 0);
+  const isValid =
+    formaPago.length > 0 &&
+    (!requiresRate || effectiveRate > 0) &&
+    customAuthorizedAmountRaw.length > 0;
 
   useEffect(() => {
     if (!showSingleItemAmountInput || !effectiveRate) return;
@@ -175,7 +182,7 @@ export default function AuthPayModal({
   // Animation
   useEffect(() => {
     expandAnim.value = withTiming(expanded ? 1 : 0, { duration: 250 });
-  }, [expanded, expandAnim]);
+  }, [expanded]);
 
   const expandStyle = useAnimatedStyle(() => ({
     maxHeight: expandAnim.value * 1500,
@@ -183,14 +190,24 @@ export default function AuthPayModal({
     overflow: "hidden",
   }));
 
-  const handleCustomAmountChange = (text: string) => {
-    const cleaned = text.replace(/[^0-9.]/g, "");
-    const parts = cleaned.split(".");
-    if (parts.length > 2) return; // more than one dot
-    if (parts[1]?.length > 2) return; // max 2 decimals
+  const handleCustomAmountChange = useCallback(
+    (text: string) => {
+      const cleaned = text.replace(/[^0-9.]/g, "");
+      const parts = cleaned.split(".");
 
-    setCustomAuthorizedAmountRaw(cleaned);
-  };
+      if (parts.length > 2) return;
+      if (parts[1]?.length > 2) return;
+
+      if (cleaned === "0" || cleaned === "0.0" || cleaned === "0.00") {
+        setErrorAmout(true);
+      } else if (errorAmount) {
+        setErrorAmout(false);
+      }
+
+      setCustomAuthorizedAmountRaw(cleaned);
+    },
+    [errorAmount],
+  );
 
   const handleAuthorize = useCallback(async () => {
     if (!isValid || isLoading) {
@@ -208,6 +225,11 @@ export default function AuthPayModal({
         "Monto excedido",
         `El máximo es ${totalVenezuela(maxAllowedAmount)} ${targetCurrency}`,
       );
+      return;
+    }
+    if (amountNum === 0) {
+      Alert.alert("Monto incorrecto", `El monto debe ser mayor a 0`);
+      setErrorAmout(true);
       return;
     }
 
@@ -281,6 +303,53 @@ export default function AuthPayModal({
     ]);
   }, [items, buildUnAuthorizedItems, onAuthorize, onClose]);
 
+  const convertAmount = useCallback(
+    (monto: number, moneda: string) => {
+      if (!effectiveRate) return 0;
+      if (moneda === targetCurrency) return monto;
+      return targetCurrency === "USD"
+        ? monto / effectiveRate
+        : monto * effectiveRate;
+    },
+    [effectiveRate, targetCurrency],
+  );
+  type ItemDetailProps = {
+    item: PlanPagos;
+    convertAmount: (monto: number, moneda: string) => number;
+    targetCurrency: string;
+    currentMethod: MethodPay | undefined;
+  };
+
+  const ItemDetail = React.memo(
+    ({
+      item,
+      convertAmount,
+      targetCurrency,
+      currentMethod,
+    }: ItemDetailProps) => (
+      <View className="py-3">
+        <Text className="font-bold dark:text-white" numberOfLines={1}>
+          {item.beneficiario}
+        </Text>
+        <Text className="text-xs text-mutedForeground">
+          {item.tipodocumento}-{item.numerodocumento} {item.observacion}
+        </Text>
+        <View className="flex-row justify-between mt-2">
+          <Text className="text-gray-500">
+            {totalVenezuela(Number(item.montoneto))} {item.moneda}
+          </Text>
+          <Text className="font-bold text-primary">
+            {currentMethod
+              ? `${totalVenezuela(
+                  convertAmount(Number(item.montoneto), item.moneda),
+                )} ${targetCurrency}`
+              : "---"}
+          </Text>
+        </View>
+      </View>
+    ),
+  );
+
   if (!visible || items.length === 0) return null;
 
   return (
@@ -353,10 +422,12 @@ export default function AuthPayModal({
                 Tasa autorizada{" "}
                 <Text className="text-error dark:text-dark-error">*</Text>
               </Text>
-              <RateInput
-                value={tasa ?? effectiveRate}
-                onChangeValue={setTasa}
-              />
+              <RateInput value={tasa} onChangeValue={setTasa} />
+              {tasa <= 0 && (
+                <Text className="text-xs mt-1 text-mutedForeground">
+                  Se usara la tasa predeterminada del documento.
+                </Text>
+              )}
             </View>
           )}
 
@@ -364,7 +435,7 @@ export default function AuthPayModal({
             <View>
               <View className="flex-row">
                 <Text className="text-lg font-bold mb-1 text-foreground dark:text-dark-foreground">
-                  Monto autorizado {effectiveRate}
+                  Monto autorizado
                 </Text>
                 <Text className="text-lg font-bold text-error dark:text-dark-error">
                   {" "}
@@ -377,6 +448,7 @@ export default function AuthPayModal({
                 onChangeText={handleCustomAmountChange}
                 placeholder={suggestedAmount || "0.00"}
                 keyboardType="numeric"
+                onError={errorAmount}
               />
               {suggestedAmount &&
                 customAuthorizedAmountRaw !== suggestedAmount && (
@@ -384,6 +456,11 @@ export default function AuthPayModal({
                     Sugerido: {totalVenezuela(Number(suggestedAmount))}
                   </Text>
                 )}
+              {errorAmount && (
+                <Text className="text-xs mt-1 text-error dark:text-dark-error">
+                  El monto no puuede ser 0.
+                </Text>
+              )}
             </View>
           )}
         </View>
@@ -399,29 +476,13 @@ export default function AuthPayModal({
           <Animated.View style={expandStyle}>
             <View className="mt-4">
               {items.map((item, index) => (
-                <View
-                  key={item.numerodocumento}
-                  className={`py-3 ${index !== 0 ? "border-t border-gray-100 dark:border-gray-800" : ""}`}
-                >
-                  <Text className="font-bold dark:text-white" numberOfLines={1}>
-                    {item.beneficiario}
-                  </Text>
-                  <Text className="text-xs text-mutedForeground">
-                    {item.tipodocumento}-{item.numerodocumento}
-                    {"  "}
-                    {item.observacion}
-                  </Text>
-                  <View className="flex-row justify-between mt-2">
-                    <Text className="text-gray-500">
-                      {totalVenezuela(Number(item.montoneto))} {item.moneda}
-                    </Text>
-                    <Text className="font-bold text-primary">
-                      {currentMethod
-                        ? `${totalVenezuela(item.moneda === targetCurrency ? Number(item.montoneto) : targetCurrency === "USD" ? Number(item.montoneto) / effectiveRate : Number(item.montoneto) * effectiveRate)} ${targetCurrency}`
-                        : "---"}
-                    </Text>
-                  </View>
-                </View>
+                <ItemDetail
+                  key={`${item.tipodocumento}-${item.numerodocumento}-${item.empresa}`}
+                  item={item}
+                  convertAmount={convertAmount}
+                  targetCurrency={targetCurrency}
+                  currentMethod={currentMethod}
+                />
               ))}
             </View>
           </Animated.View>

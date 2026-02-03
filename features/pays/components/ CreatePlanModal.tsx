@@ -65,8 +65,8 @@ export default function AuthPayModal({
   const empresas = multipleEmpresa();
 
   const defaultDesc = `PLANIFICACIÓN DE PAGO ${
-    empresas ?? ""
-  } AL ${formattedDate}`;
+    empresas ? empresas + " " : ""
+  }AL ${formattedDate}`;
 
   const [planificacion, setPlanificacionPago] = useState<PlanificacionPago>({
     descripcionplan: defaultDesc,
