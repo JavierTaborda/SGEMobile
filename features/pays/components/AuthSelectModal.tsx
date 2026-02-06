@@ -169,10 +169,12 @@ export default function AuthPayModal({
     return Math.round(val * 100) / 100;
   }, [items, effectiveRate, targetCurrency, requiresRate]);
 
-  const isValid =
-    formaPago.length > 0 &&
-    (!requiresRate || effectiveRate > 0) &&
-    customAuthorizedAmountRaw.length > 0;
+  // const isValid =
+  //   formaPago.length > 0 &&
+  //   (!requiresRate || effectiveRate > 0) &&
+  //   customAuthorizedAmountRaw.length > 0;
+
+  const isValid = !!formaPago && (!requiresRate || effectiveRate > 0);
 
   useEffect(() => {
     if (!showSingleItemAmountInput || !effectiveRate) return;
@@ -227,7 +229,7 @@ export default function AuthPayModal({
       );
       return;
     }
-    if (amountNum === 0) {
+    if (amountNum === 0 && showSingleItemAmountInput) {
       Alert.alert("Monto incorrecto", `El monto debe ser mayor a 0`);
       setErrorAmout(true);
       return;
@@ -327,7 +329,7 @@ export default function AuthPayModal({
       targetCurrency,
       currentMethod,
     }: ItemDetailProps) => (
-      <View className="py-3">
+      <View className="py-3 pb-4">
         <Text className="font-bold dark:text-white" numberOfLines={1}>
           {item.beneficiario}
         </Text>
@@ -354,9 +356,13 @@ export default function AuthPayModal({
 
   return (
     <BottomModal visible={visible} onClose={onClose} heightPercentage={0.85}>
-      <ScrollView keyboardShouldPersistTaps="handled" className="pb-6">
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        className="pb-4"
+        contentContainerClassName="pb-6"
+      >
         {/* Header */}
-        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-3">
+        <View className="bg-componentbg dark:bg-dark-componentbg rounded-2xl p-4 mb-4">
           <Text className="text-xl font-bold text-foreground dark:text-dark-foreground">
             Autorización de pagos
           </Text>

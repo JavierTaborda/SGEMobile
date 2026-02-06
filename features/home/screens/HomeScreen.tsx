@@ -88,20 +88,6 @@ export default function HomeScreen() {
           <InfoCard title="Total " value={`${totalVenezuela(totalNeto)} $`} />
         </View>
 
-        {/* Charts */}
-        {/* <Text className="text-xl text-foreground dark:text-dark-foreground font-semibold mb-2 mt-2">
-          {emojis.chartUp} {chartText}
-        </Text> */}
-        {/* <Text className="text-xl text-foreground dark:text-dark-foreground font-bold mb-2 mt-2">
-          {chartText}
-        </Text> */}
-        {/* <ChartLineView
-          labels={labels}
-          values={values}
-          dotLabels={dotLabels}
-          isDark={isDark}
-        /> */}
-
         <View className="flex-1 items-center mt-2 mb-2 rounded-3xl bg-componentbg dark:bg-dark-componentbg ">
           <PieChart
             paddingVertical={16}
