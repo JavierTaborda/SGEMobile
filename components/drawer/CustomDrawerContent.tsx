@@ -45,41 +45,8 @@ export default function CustomDrawerContent(props: any) {
           href="/(main)/(tabs)/(orders)/orderApproval"
           currentPath={currentPath}
         />
+        /* */}
 
-        
-        <DrawerItem
-          //emoji={emojis.list}
-          //emoji={emojis.approved}
-          // icon="bag-check"
-          label="Consultar Pedidos"
-          href="/(main)/(tabs)/(orders)/orderSearch"
-          currentPath={currentPath}
-        />
-        <DrawerItem
-          //emoji={emojis.list}
-          //emoji={emojis.approved}
-          // icon="bag-check"
-          label="Resumen Metas Ventas"
-          href="/(main)/(tabs)/(goals)/goalsResumen"
-          currentPath={currentPath}
-        />
-        <DrawerItem
-          //emoji={emojis.list}
-          //emoji={emojis.approved}
-          // icon="bag-check"
-          label="Reportar Devolución"
-          href="/(main)/(tabs)/(returnReport)"
-          currentPath={currentPath}
-        />
-        {role === "1" && (
-          <DrawerItem
-           // emoji={emojis.bags}
-            //emoji={emojis.approved}
-            label="Registrar Pedido"
-            href="/(main)/(tabs)/(createOrder)/create-order"
-            currentPath={currentPath}
-          />
-        )} */}
         <DrawerItem
           //emoji={emojis.list}
           //emoji={emojis.approved}

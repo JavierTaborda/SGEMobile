@@ -167,38 +167,6 @@ export default function TabLayout() {
           title: "Consultar Pedidos",
         }}
       />
-      <Tabs.Screen
-        name="(createOrder)/create-order"
-        options={{
-          href: null,
-          headerShown: true,
-          title: "Registrar Pedido",
-        }}
-      />
-      <Tabs.Screen
-        name="(createOrder)/order-summary"
-        options={{
-          href: null,
-          headerShown: true,
-          title: "",
-        }}
-      />
-      <Tabs.Screen
-        name="(goals)/goalsResumen"
-        options={{
-          href: null,
-          headerShown: true,
-          title: "Resumen Metas Ventas",
-        }}
-      />
-      <Tabs.Screen
-        name="(returnReport)/index"
-        options={{
-          href: null,
-          headerShown: true,
-          title: "Registrar Devolución",
-        }}
-      />
     </Tabs>
   );
 }
