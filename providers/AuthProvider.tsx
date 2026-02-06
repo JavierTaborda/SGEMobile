@@ -7,20 +7,31 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import AccountDeletionScreen from "@/components/screens/AccountDeletionScreen";
+import MaintenanceScreen from "@/components/screens/MaintenanceScreen";
 import SplashScreen from "@/components/SplashScreen";
 import { supabase } from "@/lib/supabase";
+import { useAppStatusStore } from "@/stores/useAppStatus";
 import { useAuthProviderStore } from "@/stores/useAuthProviderStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { hydrate } = useThemeStore();
+  const { session } = useAuthStore();
   const { showSplash, initializeApp } = useAuthProviderStore();
+  const {
+    maintenance,
+    maintenanceMessage,
+    accountDeletionRequested,
+    deletionMessage,
+    loading: appStatusLoading,
+    checkAppStatus,
+  } = useAppStatusStore();
 
   // valores compartidos en Reanimated
   const splashOpacity = useSharedValue(1);
   const contentOpacity = useSharedValue(0);
-
 
   const splashStyle = useAnimatedStyle(() => ({
     ...StyleSheet.absoluteFillObject,
@@ -37,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsMounted(true);
   }, []);
 
-
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -45,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           useAuthStore.getState().setSession(session);
           useAuthStore.getState().setToken(session.access_token);
         }
-      }
+      },
     );
     return () => {
       subscription.subscription.unsubscribe();
@@ -68,6 +78,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
   }, [isMounted]);
 
+  useEffect(() => {
+    const runChecks = async () => {
+      const userId = useAuthStore.getState().userId;
+      await checkAppStatus(userId);
+    };
+    if (!showSplash) runChecks();
+  }, [showSplash, session]);
+
   // animaciones splash → contenido
   useEffect(() => {
     if (!showSplash) {
@@ -81,6 +99,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     }
   }, [showSplash]);
+
+  if (appStatusLoading) return null;
+
+  if (maintenance) {
+    return <MaintenanceScreen message={maintenanceMessage} />;
+  }
+
+  if (accountDeletionRequested) {
+    return <AccountDeletionScreen message={deletionMessage} />;
+  }
 
   return (
     <View className="flex-1 bg-background dark:bg-dark-background">

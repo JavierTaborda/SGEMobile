@@ -1,106 +1,64 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getPedidos } from "../services/HomeScreenServices";
-import Pedidos from "../types/Pedidos";
-
-// show Mil / Millon
-const formatAbbreviated = (value: number | string): string => {
-  const number = typeof value === "string" ? parseFloat(value) : value;
-  if (number >= 1_000_000) return `$${(number / 1_000_000).toFixed(0)}Mill`;
-  if (number >= 1_000) return `$${(number / 1_000).toFixed(0)}Mil`;
-  return `$ ${number.toLocaleString("es-VE", { minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
-};
+import { CompanySummary } from "../interfaces/CommpanySummary";
+import { PieChartData } from "../interfaces/PieChartData";
+import { getSummary } from "../services/HomeScreenServices";
 
 export function useHomeScreen() {
-  const [pedidos, setPedidos] = useState<Pedidos[]>([]);
+
+  const [summaryData, setSummaryData] = useState<CompanySummary[]>([]);
+  const [chartData, setChartData] = useState<PieChartData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [chartText, setChartText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const getData = useCallback(() => {
+  // useHomeScreen.ts
+  const colors = ["#EF4444", "#F59E0B", "#4F46E5", "#10B981", "#8B5CF6", "#06B6D4"]; // Paleta de colores para la gráfica
+  // useHomeScreen.ts
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    getPedidos()
-      .then((data) => {
-        setPedidos(data || []);
-        
-        if (data && data.length > 0) {
-          const firstDate = data[0].fec_emis?.split("T")[0]; 
-          if (firstDate) {
-            const [year, month] = firstDate.split("-");
-            const meses = [
-              "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-              "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-            ];
-            const mesNombre = meses[parseInt(month, 10)];
-            setChartText(`Pedidos ${mesNombre} ${year}`);
-          } else {
-            setChartText("Pedidos");
-          }
-        } else {
-          setChartText("Pedidos");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Ocurrió un error al cargar los datos...");
-      })
+    try {
+      const response: CompanySummary[] = await getSummary();
 
-      .finally(() => setLoading(false));
+   
+      const validData = response
+        .filter(item => item.totalSaldoUSD > 0)
+       // .sort((a, b) => b.totalSaldoUSD - a.totalSaldoUSD);
+
+      // Total USD
+      const grandTotal = validData.reduce((acc, curr) => acc + curr.totalSaldoUSD, 0);
+
+      const formattedPie = validData.map((item, index) => {
+        const percentage = grandTotal > 0
+          ? ((item.totalSaldoUSD / grandTotal) * 100).toFixed(1)
+          : "0";
+
+        return {
+          value: item.totalSaldoUSD,
+          color: colors[index % colors.length],
+          text: item.empresa,
+          percentage: `${percentage}%`, 
+          focused: index === 0,
+        };
+      });
+      setSummaryData(response);
+      setChartData(formattedPie);
+    } catch (err) {
+      setError("Error calculando datos");
+    } finally {
+      setLoading(false);
+    }
   }, []);
-
   useEffect(() => {
-    getData();
-  }, [getData]);
+    fetchData();
+  }, [fetchData]);
 
-  // Totals  by day + labels
-  const totalsByDate = useMemo(() => {
-    const grouped: Record<string, number> = pedidos.reduce(
-      (acc, pedido) => {
-        const date = pedido.fec_emis?.split("T")[0];
-        const tot =Number(pedido.tot_neto || 0);
-        if (date) acc[date] = (acc[date] || 0) + tot;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-    // const dateText = pedidos.
-    // console.log(dateText)
-    // setChartText(`${chartText}`)
+  //  InfoCards
+  const totals = useMemo(() => {
+    const totalNeto = summaryData.reduce((acc, p) => acc + (Number(p.totalNetoUSD) || 0), 0);
+    const totalSaldo = summaryData.reduce((acc, curr) => acc + curr.totalSaldoUSD, 0);
+    const totalSaldoBs = summaryData.reduce((acc, curr) => acc + curr.totalSaldoVED, 0);
+    return { totalNeto, totalSaldo, totalSaldoBs, totalCount: summaryData.reduce((acc, curr) => acc + (curr.cantidadDocs || 0), 0) };
+  }, [ summaryData]);
 
-    return Object.entries(grouped)
-      .map(([x, y]) => ({
-        x,
-        y: y || 0,
-        label: formatAbbreviated(y || 0),
-        dayLabel: x.split("-")[2],
-      }))
-      .sort((a, b) => new Date(a.x).getTime() - new Date(b.x).getTime());
-
-  }, [pedidos]);
-
-
-  // Labels and values for the chart
-  const labels = totalsByDate.map((t) => t.dayLabel);
-  const values = totalsByDate.map((t) => t.y);
-  const dotLabels = totalsByDate.map((t) => t.label);
-  // Totals
-  const totalPedidos = pedidos.length;
-  const totalNeto = pedidos.reduce(
-    (acc, p) => acc + (Number(p.tot_neto) || 0),
-    0
-  );
-
-  return {
-    getData,
-    pedidos,
-    loading,
-    error,
-    totalsByDate,
-    totalPedidos,
-    totalNeto,
-    labels,
-    values,
-    dotLabels,
-    chartText,
-  };
+  return { ...totals, summaryData, chartData, loading, error, fetchData };
 }

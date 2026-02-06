@@ -1,7 +1,6 @@
 import api from "@/lib/axios";
 
-export const getPedidos = async (user?: string) => {
-  const response = await api.get("orders/all");
-
+export const getSummary = async (user?: string) => {
+  const response = await api.get("pays/sumary");
   return response.data;
 };
