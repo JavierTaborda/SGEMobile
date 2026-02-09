@@ -145,7 +145,7 @@ export default function HomeScreen() {
 
         {/* Leyenda Condicional con Animación Mental */}
         {showLegend && (
-          <View className="w-full mt-8 border-t border-gray-100 dark:border-neutral-800 pt-4">
+          <View className="w-full mt-4 border-t border-gray-100 dark:border-neutral-800 pt-4">
             {chartData.map((item, index) => (
               <Pressable
                 key={index}
@@ -178,7 +178,7 @@ export default function HomeScreen() {
         )}
       </View>
 
-      <View className="flex-row flex-wrap justify-between mt-8 mb-4">
+      <View className="flex-row flex-wrap justify-between mt-4 mb-4">
         <View className="w-[48%] mb-4">
           <ModuleButton
             label="Autorizar Pagos"

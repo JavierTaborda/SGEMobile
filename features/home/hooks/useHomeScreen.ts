@@ -3,6 +3,23 @@ import { CompanySummary } from "../interfaces/CommpanySummary";
 import { PieChartData } from "../interfaces/PieChartData";
 import { getSummary } from "../services/HomeScreenServices";
 
+
+export const CHART_COLORS = [
+
+  "#B91C1C",
+  "#EF4444",
+  "#F59E0B",
+  "#EAB308",
+  "#84CC16",
+  "#22C55E",
+  "#10B981",
+  "#06BBBB",
+  "#06B6D4",
+
+] as const;
+
+
+
 export function useHomeScreen() {
 
   const [summaryData, setSummaryData] = useState<CompanySummary[]>([]);
@@ -10,21 +27,19 @@ export function useHomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // useHomeScreen.ts
-  const colors = ["#EF4444", "#F59E0B", "#4F46E5", "#10B981", "#8B5CF6", "#06B6D4"]; // Paleta de colores para la gráfica
-  // useHomeScreen.ts
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response: CompanySummary[] = await getSummary();
 
-   
+
       const validData = response
         .filter(item => item.totalSaldoUSD > 0)
-       // .sort((a, b) => b.totalSaldoUSD - a.totalSaldoUSD);
+      // .sort((a, b) => b.totalSaldoUSD - a.totalSaldoUSD);
 
-      // Total USD
+      // Total USD 
       const grandTotal = validData.reduce((acc, curr) => acc + curr.totalSaldoUSD, 0);
 
       const formattedPie = validData.map((item, index) => {
@@ -34,9 +49,9 @@ export function useHomeScreen() {
 
         return {
           value: item.totalSaldoUSD,
-          color: colors[index % colors.length],
+          color: CHART_COLORS[index % CHART_COLORS.length],
           text: item.empresa,
-          percentage: `${percentage}%`, 
+          percentage: `${percentage}%`,
           focused: index === 0,
         };
       });
@@ -48,6 +63,7 @@ export function useHomeScreen() {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -58,7 +74,7 @@ export function useHomeScreen() {
     const totalSaldo = summaryData.reduce((acc, curr) => acc + curr.totalSaldoUSD, 0);
     const totalSaldoBs = summaryData.reduce((acc, curr) => acc + curr.totalSaldoVED, 0);
     return { totalNeto, totalSaldo, totalSaldoBs, totalCount: summaryData.reduce((acc, curr) => acc + (curr.cantidadDocs || 0), 0) };
-  }, [ summaryData]);
+  }, [summaryData]);
 
   return { ...totals, summaryData, chartData, loading, error, fetchData };
 }
