@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Animated modals (`AnimatedView`).
   - Unified `Overlay` component supporting `success`, `error`, `warning`, and `info`.
   - Dynamic animations and icons based on overlay type.
+  - Add moti 0.30.0
+  - Add react-native-gifted-charts
 
   Usage:
 
@@ -57,7 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       // Info
       overlay.show("info", { title: "Versión instalada", subtitle: "App actualizada a v1.2" });
       ```
-  - Added  `react-native-pager-view` library.
+
+  - Added `react-native-pager-view` library.
 
 ### Changed
 
@@ -67,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved `ScreenSearchLayout` with `showfilterButton` property.
 - Replaced `alert` with `Alert.alert`.
 - Replaced Expo Haptics with `safeHaptics`.
-- Replaced FlatList component with FlashList from `@shopify/flash-list`  
+- Replaced FlatList component with FlashList from `@shopify/flash-list`
 
 ### Fixed
 
