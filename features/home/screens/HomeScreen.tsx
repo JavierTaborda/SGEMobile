@@ -6,7 +6,7 @@ import { totalVenezuela } from "@/utils/moneyFormat";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutAnimation,
   Pressable,
@@ -70,13 +70,20 @@ export default function HomeScreen() {
 
   const displayInfo = selected || initialData;
   const isSlected = !!selected;
+
+  useEffect(() => {
+    if (chartData[0]) {
+      handleSelect(chartData[0]);
+    }
+  }, [chartData]);
+
   if (loading) return <HomeSkeleton />;
   if (error) return <ErrorView error={error} getData={fetchData} />;
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
-      className="bg-background dark:bg-dark-background px-4 pt-4"
+      className="bg-background dark:bg-dark-background px-4 pt-1"
       refreshControl={
         <RefreshControl refreshing={loading} onRefresh={fetchData} />
       }
@@ -86,13 +93,13 @@ export default function HomeScreen() {
           <Text className="text-gray-500 dark:text-gray-400 text-sm font-medium">
             Bienvenido de vuelta,
           </Text>
-          <Text className="text-slate-900 dark:text-white text-3xl font-bold">
+          <Text className="text-slate-900 dark:text-white text-2xl font-bold">
             {name}
           </Text>
         </View>
       </View>
 
-      <View className="flex-row gap-3 mb-4">
+      <View className="flex-row gap-2 mb-3">
         <View className="flex-1">
           <InfoCard title="Documentos" value={totalCount} />
         </View>
@@ -109,8 +116,8 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View className="p-4 rounded-3xl bg-componentbg dark:bg-dark-componentbg mb-6">
-        <View className="flex-row justify-between items-center mb-3">
+      <View className="px-4 py-2 rounded-3xl bg-componentbg dark:bg-dark-componentbg mb-3">
+        <View className="flex-row justify-between items-center mb-1">
           <View>
             <Text className="text-foreground dark:text-dark-foreground font-bold text-lg">
               Saldos por Empresa
@@ -174,13 +181,13 @@ export default function HomeScreen() {
             }))}
             donut
             sectionAutoFocus
-            radius={125}
+            radius={135}
             innerRadius={isSlected ? 55 : 45}
             animationDuration={400}
             showText={!isSlected}
             labelsPosition="outward"
-            paddingHorizontal={20}
-            paddingVertical={15}
+            paddingHorizontal={25}
+            paddingVertical={5}
             textSize={9}
             fontWeight="bold"
             textColor={isDark ? appTheme.dark.foreground : appTheme.foreground}
@@ -199,7 +206,7 @@ export default function HomeScreen() {
 
         <Pressable
           onPress={toggleLegend}
-          className="mt-3 py-3 border-t border-slate-50 dark:border-slate-700 flex-row justify-center items-center"
+          className=" py-3 border-t border-slate-50 dark:border-slate-700 flex-row justify-center items-center"
         >
           <Text className="text-primary dark:text-dark-primary font-semibold mr-2">
             {showLegend ? "Resumir" : "Ver detalles"}
@@ -207,7 +214,9 @@ export default function HomeScreen() {
           <Ionicons
             name={showLegend ? "chevron-up" : "chevron-down"}
             size={16}
-            color={appTheme.primary.DEFAULT}
+            color={
+              isDark ? appTheme.dark.primary.DEFAULT : appTheme.primary.DEFAULT
+            }
           />
         </Pressable>
 
@@ -253,7 +262,7 @@ export default function HomeScreen() {
         )}
       </View>
 
-      <View className="flex-row gap-4">
+      <View className="flex-row gap-4 pt-1">
         <Pressable
           onPress={() => router.push("/authPays")}
           className="flex-1 bg-primary dark:bg-dark-primary h-16 rounded-2xl items-center justify-center   flex-row"
