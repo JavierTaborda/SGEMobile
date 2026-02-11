@@ -11,7 +11,7 @@
     "platforms": ["ios", "android", "web"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sge.mobile",
+      "bundleIdentifier": "com.sgemobile.app",
       "infoPlist": {
         "NSFaceIDUsageDescription": "This app uses Face ID for secure authentication.",
         "ITSAppUsesNonExemptEncryption": false

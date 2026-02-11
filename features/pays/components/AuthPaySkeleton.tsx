@@ -30,8 +30,15 @@ export default class AuthPaySkeleton extends Component {
           <View>
             <View className="h-44 w-full bg-gray-300 dark:bg-gray-700 rounded-2xl animate-pulse mb-4" />
           </View>
-
-
+          <View>
+            <View className="h-44 w-full bg-gray-300 dark:bg-gray-700 rounded-2xl animate-pulse mb-4" />
+          </View>
+          <View>
+            <View className="h-44 w-full bg-gray-300 dark:bg-gray-700 rounded-2xl animate-pulse mb-4" />
+          </View>
+          <View>
+            <View className="h-44 w-full bg-gray-300 dark:bg-gray-700 rounded-2xl animate-pulse mb-4" />
+          </View>
         </View>
       </View>
     );
