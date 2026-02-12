@@ -9,13 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Core Modules:**
-  - Goals Module (product goals and metrics).
-  - Orders Module (order search and approval).
-  - Create Orders Module (order creation).
-  - Returns Report Module (reporting and tracking returns).
   - Home Module (dashboard and metrics).
   - Profile Module (user profile and settings).
   - Auth Module (login, session handling, biometric authentication).
+
 - **Navigation & Architecture:**
   - Expo Router with Drawer and Tabs.
   - Modular architecture by feature.
@@ -61,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       ```
 
   - Added `react-native-pager-view` library.
+  - Added `react-native-gifted-charts`
 
 ### Changed
 

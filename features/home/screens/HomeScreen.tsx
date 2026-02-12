@@ -16,7 +16,6 @@ import {
   View,
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
-//import { PieChart } from "react-native-gifted-charts";
 import { CurrencySwitch } from "../components/CurrencySwitch";
 import { useHomeScreen } from "../hooks/useHomeScreen";
 import { PieChartData } from "../interfaces/PieChartData";
