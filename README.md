@@ -1,22 +1,23 @@
-# 📱 Frigilux App
+# 📱 SGE Mobile App
 
 <p align="center">
-  <img width="900" height="" alt="Phone" src="https://github.com/user-attachments/assets/18208257-67b2-4d67-8000-68def3920f70" />
+  <img width="900" height="" alt="Phone" src="https://github.com/user-attachments/assets/7664ac03-d94a-40f7-9b8d-a6c7b92faa22" />
+
 </p>
 
-<p align="center"> <img src="https://frigilux.com/wp-content/uploads/2024/05/FRIGILUX-LOGO-02-1536x287.png" alt="Frigilux Logo" width="300"/> </p> <p align="center"> <b>Aplicación móvil empresarial para la gestión comercial de Frigilux en Venezuela</b><br/> <i>Enterprise mobile app for commercial management of Frigilux in Venezuela</i> </p> <p align="center"> <a href="https://frigilux.com">🌐 Sitio oficial / Official Website</a> 
+<p align="center"> <img src="https://frigilux.com/wp-content/uploads/2024/05/FRIGILUX-LOGO-02-1536x287.png" alt="Frigilux Logo" width="300"/> </p> <p align="center"> <b>SGE Mobile permite crear, aprobar y controlar planes de pago en tiempo real </b><br/> <i> SGE Mobile is an enterprise mobile app for authorizing and planification of pays in real time </i> </p> <p align="center"> <a href="https://sgemobile.friginet.xyz/">🌐 Sitio oficial / Official Website</a> 
    
 ## 🌟 Características / Features
 
-📊 **Gestión comercial completa** / **Full commercial management**  
-Pedidos, ventas y autorización de pagos.  
-Orders, sales, and payment authorization.
+📊 **Aprobaciones rápidas** / **Fast authorizing**  
+Autoriza planes de pago desde cualquier lugar.  
+Authorize plans of pays from everywhere.
 
-📲 **Acceso móvil seguro** / **Secure mobile access**  
-Múltiples métodos de login: correo, contraseña, OTP, biometría.  
-Multiple login methods: email, password, OTP, biometrics.
+📲 **Control Ttotal** / **Tottal control**  
+Visualiza montos, cuotas y estados en tiempo real.
+Visualice amounts, payment installments and status in any moment.
 
-✅ **Roles y permisos** / **Roles & permissions**  
+✅ **Integrado al SGE de Cyberlux Venezuela** / **Integrated in the Intern System of Cyberlux Venezuerla**  
 Admin, gerentes, vendedores.  
 Admin, managers, salespeople.
 
@@ -41,7 +42,7 @@ Integration with Supabase + biometric authentication.
 | **Backend**                 | ![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs\&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-Auth%20+%20DB-3ECF8E?logo=supabase\&logoColor=white)                                                                                                   |
 | **Estado / State Mgmt.**    | ![Zustand](https://img.shields.io/badge/Zustand-FF9900?logo=react\&logoColor=white)                                                                                                                                                                                                         |
 | **Iconos / Icons**          | ![@expo/vector-icons](https://img.shields.io/badge/%40expo/vector--icons-Icon%20Pack-blueviolet)                                                                                                                                                                                            |
-| **Gráficos / Charts**       | ![Chart Kit](https://img.shields.io/badge/react--native--chart--kit-Graphs-orange)                                                                                                                                                                                                          |
+| **Gráficos / Charts**       | ![Chart Kit](https://img.shields.io/badge/react--native--chart--kit-Graphs-orange)    ![Gifted Charts](https://img.shields.io/badge/react--native--gifted--charts-Graphs-blue)                                                                                                                                                                                                      |
 
 
 ### 🏗 Estructura Modular / Modular Architecture
@@ -49,10 +50,9 @@ Integration with Supabase + biometric authentication.
 frigiluxapp/
 ├── app/                 # Rutas (Expo Router)/ Routes
 ├── components/          # Componentes reutilizables / Reusable components
-├── modules/             # Módulos de funcionalidad / Feature modules
+├── features/             # Módulos de funcionalidad / Feature modules
 │   ├── auth/            # Autenticación / Authentication
 │   ├── home/            # Dashboard
-│   ├── orders/          # Gestión de pedidos / Order management
 │   ├── pays/            # Autorización de pagos / Payments
 │   └── profile/         # Perfil de usuario / User profile
 ├── stores/              # Estado global (Zustand) / Global state
@@ -64,33 +64,24 @@ frigiluxapp/
 ### 📸 Demo / Screenshots
 
 
-<p align="center">
-<img src="https://github.com/user-attachments/assets/8dd1265d-f379-4712-a22e-258202a54141" alt="Login" width="200" style="margin: 10px;" />
-  <br><em>✔ Login</em>
-</p>
+<div align="center">
 
 
-<p align="center">
-<img src="https://github.com/user-attachments/assets/ca5d9116-5414-48ee-bc5b-8ae82b742da3" alt="Login" width="200" style="margin: 10px;" />
-  <br><em>📲 Home </em>
+
+
+https://github.com/user-attachments/assets/e4658ab0-6d33-48b6-96d6-271e014c942c
+
+
+</div>
+
+
+
+<p align="center"> <br> <em>✅ Principals Screens </em> <br>
+<img width="220"  alt="Iphone 1" src="https://github.com/user-attachments/assets/7a642cbe-cac0-4282-b90e-7639d709e628" />
+<img width="220"  alt="Iphone 2" src="https://github.com/user-attachments/assets/f025e343-ac61-42bd-88b4-27e16f73490b" />
+<img width="220"  alt="Iphone 3" src="https://github.com/user-attachments/assets/5f655e9c-31b3-4580-bf20-344ecdf082ea" />
+<img width="220" alt="Iphone 4" src="https://github.com/user-attachments/assets/f926bafe-3d6a-4478-9f1a-29bae7067c53" />
+
 </p>
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/842842f4-4e8b-4f49-a85e-678ca7aabe40" alt="Drawer" width="200" style="margin: 10px;" />
-  <br><em>📂 Drawer Menu</em>
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/adc9a11c-e09a-4fa0-8545-38799a7d5228" alt="Order Approval 1" width="200" style="margin: 10px;" />
-  <img src="https://github.com/user-attachments/assets/0027a03a-62ae-4787-b0e6-1c8468d23209" alt="Order Approval 2" width="200" style="margin: 10px;" /> 
-  <img src="https://github.com/user-attachments/assets/e5e06dde-9dd2-400c-b435-cfb4c03cd1cb" alt="Order Approval 3" width="200" style="margin: 10px;" />
-  <img src="https://github.com/user-attachments/assets/6face753-311f-49e2-8718-1adb162cdbc5" alt="Order Approval 4" width="200" style="margin: 10px;" />
-  <img src="https://github.com/user-attachments/assets/2ab66e71-33d4-427e-b607-cbd47b996ff2" alt="Order Approval 5" width="200" style="margin: 10px;" />
-  <br><em>✅ Orders Screens: Approval Orders, Details Order, Filters and Searchs </em>
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/99d86828-512a-424e-bcc4-1af6c4d06146" alt="Create Order" width="200" style="margin: 10px;" />
-  <br><em>📝 Create Order Screen</em>
-</p>
 
